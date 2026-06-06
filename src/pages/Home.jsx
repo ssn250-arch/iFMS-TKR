@@ -27,28 +27,9 @@ const Home = ({ onOpenForm, onOpenModal }) => {
         {/* Grid Menu Utama */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
           
-          {/* KAD 1: Aduan Kerosakan ICT (Dalam Pembinaan) */}
-          <div 
-            onClick={onOpenModal} 
-            className="card-hover-effect group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg cursor-pointer overflow-hidden isolate"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-            <div className="absolute top-6 right-6 flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm">
-              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-              Dalam Pembinaan
-            </div>
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-slate-100 group-hover:from-orange-100 group-hover:to-red-100 transition-colors duration-300">
-              <Wrench className="w-8 h-8 sm:w-10 sm:h-10 text-slate-500 group-hover:text-orange-600 transition-colors duration-300" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-3 group-hover:text-orange-700 transition-colors">Aduan Kerosakan ICT</h2>
-            <p className="text-sm sm:text-base text-slate-500 mb-6">Sistem pelaporan masalah teknikal, kerosakan PC, atau isu rangkaian untuk tindakan penyelenggaraan.</p>
-            <div className="inline-flex items-center gap-2 text-slate-400 font-semibold text-sm group-hover:text-orange-600 transition-colors">
-              <span>Akses Disekat Buat Masa Ini</span>
-              <Lock className="w-4 h-4" />
-            </div>
-          </div>
+          
 
-          {/* KAD 2: Log Penggunaan Peralatan ICT (Aktif) */}
+          {/* KAD 1: Log Penggunaan Peralatan ICT (Aktif) */}
           <button 
             onClick={onOpenForm} 
             className="text-left w-full card-hover-effect group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg block overflow-hidden isolate outline-none focus:ring-4 focus:ring-blue-500/30"
@@ -69,6 +50,27 @@ const Home = ({ onOpenForm, onOpenModal }) => {
             </div>
           </button>
           
+        {/* KAD 2: Aduan Kerosakan ICT (Dalam Pembinaan) */}
+          <div 
+            onClick={onOpenModal} 
+            className="card-hover-effect group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg cursor-pointer overflow-hidden isolate"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            <div className="absolute top-6 right-6 flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+              Dalam Pembinaan
+            </div>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-slate-100 group-hover:from-orange-100 group-hover:to-red-100 transition-colors duration-300">
+              <Wrench className="w-8 h-8 sm:w-10 sm:h-10 text-slate-500 group-hover:text-orange-600 transition-colors duration-300" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-3 group-hover:text-orange-700 transition-colors">Aduan Kerosakan ICT</h2>
+            <p className="text-sm sm:text-base text-slate-500 mb-6">Sistem pelaporan masalah teknikal, kerosakan PC, atau isu rangkaian untuk tindakan penyelenggaraan.</p>
+            <div className="inline-flex items-center gap-2 text-slate-400 font-semibold text-sm group-hover:text-orange-600 transition-colors">
+              <span>Akses Disekat Buat Masa Ini</span>
+              <Lock className="w-4 h-4" />
+            </div>
+          </div>
+
         </div>
       </div>
     </main>
