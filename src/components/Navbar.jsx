@@ -1,22 +1,51 @@
-import React from 'react';
-import { ChevronLeft, Layers, MonitorSmartphone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, Layers, MonitorSmartphone } from 'lucide-react';
 import logo from '../assets/logo.png'; // Pastikan path ke logo betul
 
 const Navbar = ({ currentView, onBackHome }) => {
+  // State untuk kesan scroll
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Jika scroll ke bawah dan melepasi 50px, sembunyikan header
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false);
+      } 
+      // Jika scroll ke atas, tunjukkan semula header
+      else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Bersihkan event listener bila komponen tak digunakan
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
-    <nav className="glass-nav sticky top-0 z-40 border-b border-slate-200/60 shadow-sm transition-all duration-300">
+    // Tambah logik isVisible pada className: translate-y-0 (tunjuk) / -translate-y-full (sorok)
+    <nav className={`glass-nav sticky top-0 z-40 border-b border-slate-200/60 shadow-sm transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-20 py-3 sm:py-0 gap-3 sm:gap-0">
           
-          {/* Bahagian Logo & Butang Kembali */}
+          {/* Bahagian Logo & Butang Kembali Moden */}
           <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">
             {currentView === 'form' && (
               <button 
                 onClick={onBackHome} 
-                className="flex items-center gap-2 text-slate-500 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors text-sm font-semibold"
+                className="group flex items-center gap-2.5 px-2 py-2 sm:px-3 sm:py-2 bg-white/80 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-slate-600 hover:text-blue-700 font-semibold text-sm backdrop-blur-sm active:scale-95"
               >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Kembali</span>
+                <div className="bg-slate-100 group-hover:bg-blue-600 group-hover:text-white p-1.5 rounded-full transition-all duration-300 shadow-inner">
+                  <Home className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                </div>
+                <span className="hidden sm:inline pr-2 tracking-wide">Menu Utama</span>
               </button>
             )}
             <img src={logo} alt="Logo ADTEC" className="h-10 sm:h-12 w-auto object-contain drop-shadow-sm" />
