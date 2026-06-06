@@ -125,14 +125,22 @@ const ICTLog = ({ onBack }) => {
               </div>
             </div>
 
-            {/* RUANGAN SERVER YANG DITAMBAH BAIK (PILIHAN) */}
+            {/* KEMAS KINI: Ruangan Server Dibuat Sepenuhnya Optional */}
             {formData.lokasi === 'Lab Server' && (
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Server <span className="text-slate-400 font-normal text-xs ml-1">(Pilihan)</span></label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Pilih Server <span className="text-slate-400 font-normal text-xs ml-1">(Pilihan)</span>
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Server className="w-5 h-5 text-slate-400" /></div>
-                  <select name="noserver" value={formData.noserver} onChange={handleChange} className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.noserver ? 'text-slate-400' : 'text-slate-900'}`}>
-                    <option value="">Tiada / Tidak Berkaitan</option>
+                  <select 
+                    name="noserver" 
+                    value={formData.noserver} 
+                    onChange={handleChange} 
+                    className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.noserver ? 'text-slate-400' : 'text-slate-900'}`}
+                  >
+                    {/* TUKAR: Buang 'disabled hidden' supaya jadi optional yang betul-betul bebas dipilih/dibuang */}
+                    <option value="">-- Tiada Server (Abaikan) --</option>
                     {[...Array(7)].map((_, i) => (
                       <option key={i} value={`Server ${i + 1}`} className="text-slate-900">Server {i + 1}</option>
                     ))}
@@ -232,11 +240,10 @@ const ICTLog = ({ onBack }) => {
             <tbody>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', width: '35%', fontWeight: '600' }}>Nama Pelajar</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', width: '5%' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.nama}</td></tr>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Matrik</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.matrik}</td></tr>
-              
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Semester</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.semester}</td></tr>
-              
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Lokasi Makmal</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.lokasi}</td></tr>
               
+              {/* Akan papar nombor server HANYA JIKA ada pilihan server yang dipilih */}
               {formData.lokasi === 'Lab Server' && formData.noserver && (
                 <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Server</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.noserver}</td></tr>
               )}
