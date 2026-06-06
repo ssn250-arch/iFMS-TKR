@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { User, IdCard, MapPin, Server, PcCase, Calendar, Clock, ClipboardList, Send, Loader2, CheckCircle } from 'lucide-react';
-import html2canvas from 'html2canvas-pro';
+import html2canvas from 'html2canvas-pro'; 
 import jsPDF from 'jspdf';
 import logo from '../assets/logo.png'; 
 
@@ -41,7 +41,6 @@ const ICTLog = ({ onBack }) => {
 
       const safeName = formData.nama.replace(/[^a-zA-Z0-9]/g, '_');
       const safeLokasi = formData.lokasi.replace(/[^a-zA-Z0-9]/g, '');
-      // Kalau noserver kosong, kita tak masukkan dalam nama fail
       const serverPart = formData.noserver ? `_${formData.noserver.replace(/\s+/g, '')}` : '';
       const fileName = `Log_${safeLokasi}${serverPart}_${formData.nopc}_${safeName}.pdf`;
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
@@ -103,7 +102,6 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Lokasi (Lab) <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><MapPin className="w-5 h-5 text-slate-400" /></div>
-                {/* TUKAR: Value kosong dan disable opsyen pertama bertindak sebagai placeholder */}
                 <select name="lokasi" value={formData.lokasi} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.lokasi ? 'text-slate-400' : 'text-slate-900'}`}>
                   <option value="" disabled hidden>Pilih lokasi makmal</option>
                   <option value="Lab Aplikasi" className="text-slate-900">Lab Aplikasi</option>
@@ -116,11 +114,9 @@ const ICTLog = ({ onBack }) => {
 
             {formData.lokasi === 'Lab Server' && (
               <div>
-                {/* TUKAR: Buang bintang merah, tambah tag (Pilihan) */}
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Server <span className="text-slate-400 font-normal text-xs ml-1">(Pilihan)</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Server className="w-5 h-5 text-slate-400" /></div>
-                  {/* TUKAR: Buang 'required' dan warnakan placeholder kelabu */}
                   <select name="noserver" value={formData.noserver} onChange={handleChange} className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.noserver ? 'text-slate-400' : 'text-slate-900'}`}>
                     <option value="" disabled hidden>Pilih nombor server</option>
                     {[...Array(7)].map((_, i) => (
@@ -148,17 +144,13 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Tarikh Penggunaan <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Calendar className="w-5 h-5 text-slate-400" /></div>
-                {/* TUKAR: Guna onFocus dan onBlur untuk papar placeholder dd/mm/yyyy */}
                 <input 
-                  type="text" 
+                  type="date" 
                   name="tarikh" 
                   value={formData.tarikh} 
                   onChange={handleChange} 
-                  onFocus={(e) => (e.target.type = 'date')}
-                  onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
-                  placeholder="dd/mm/yyyy"
                   required 
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base placeholder:text-slate-400" 
+                  className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base ${!formData.tarikh ? 'text-slate-400' : 'text-slate-900'}`} 
                 />
               </div>
             </div>
@@ -167,17 +159,13 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Masa Penggunaan <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Clock className="w-5 h-5 text-slate-400" /></div>
-                {/* TUKAR: Guna onFocus dan onBlur untuk papar placeholder --:-- -- */}
                 <input 
-                  type="text" 
+                  type="time" 
                   name="masaGuna" 
                   value={formData.masaGuna} 
                   onChange={handleChange} 
-                  onFocus={(e) => (e.target.type = 'time')}
-                  onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
-                  placeholder="--:-- --"
                   required 
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base placeholder:text-slate-400" 
+                  className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base ${!formData.masaGuna ? 'text-slate-400' : 'text-slate-900'}`} 
                 />
               </div>
             </div>
@@ -200,7 +188,6 @@ const ICTLog = ({ onBack }) => {
           </div>
         </form>
 
-        {/* Paparan State Berjaya (Overlay) */}
         {showSuccess && (
           <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl p-8 text-center transition-all duration-300">
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5 text-emerald-600 animate-bounce">
@@ -233,7 +220,6 @@ const ICTLog = ({ onBack }) => {
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Matrik</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.matrik}</td></tr>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Lokasi Makmal</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.lokasi}</td></tr>
               
-              {/* Akan papar nombor server jika dipilih, atau biarkan baris ni jika tidak dipilih tetapi Lab Server dipilih */}
               {formData.lokasi === 'Lab Server' && formData.noserver && (
                 <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Server</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.noserver}</td></tr>
               )}
