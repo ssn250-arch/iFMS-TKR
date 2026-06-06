@@ -41,7 +41,7 @@ const ICTLog = ({ onBack }) => {
 
       const safeName = formData.nama.replace(/[^a-zA-Z0-9]/g, '_');
       const safeLokasi = formData.lokasi.replace(/[^a-zA-Z0-9]/g, '');
-      const serverPart = formData.noserver ? `_${formData.noserver.replace(/\s+/g, '')}` : '';
+      const serverPart = (formData.noserver && formData.noserver !== 'Tiada') ? `_${formData.noserver.replace(/\s+/g, '')}` : '';
       const fileName = `Log_${safeLokasi}${serverPart}_${formData.nopc}_${safeName}.pdf`;
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
 
@@ -104,9 +104,9 @@ const ICTLog = ({ onBack }) => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><BookOpen className="w-5 h-5 text-slate-400" /></div>
                 <select name="semester" value={formData.semester} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.semester ? 'text-slate-400' : 'text-slate-900'}`}>
                   <option value="" disabled hidden>Pilih semester</option>
-                  <option value="1" className="text-slate-900">Semester 1</option>
-                  <option value="2" className="text-slate-900">Semester 2</option>
-                  <option value="3" className="text-slate-900">Semester 3</option>
+                  <option value="Semester 1" className="text-slate-900">Semester 1</option>
+                  <option value="Semester 2" className="text-slate-900">Semester 2</option>
+                  <option value="Semester 3" className="text-slate-900">Semester 3</option>
                 </select>
               </div>
             </div>
@@ -125,7 +125,6 @@ const ICTLog = ({ onBack }) => {
               </div>
             </div>
 
-            {/* KEMAS KINI: Ruangan Server Dibuat Sepenuhnya Optional */}
             {formData.lokasi === 'Lab Server' && (
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -133,14 +132,14 @@ const ICTLog = ({ onBack }) => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Server className="w-5 h-5 text-slate-400" /></div>
+                  {/* TIADA 'required' tag di sini, dan value asal adalah "Tiada" */}
                   <select 
                     name="noserver" 
-                    value={formData.noserver} 
+                    value={formData.noserver || "Tiada"} 
                     onChange={handleChange} 
-                    className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.noserver ? 'text-slate-400' : 'text-slate-900'}`}
+                    className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${(!formData.noserver || formData.noserver === 'Tiada') ? 'text-slate-400' : 'text-slate-900'}`}
                   >
-                    {/* TUKAR: Buang 'disabled hidden' supaya jadi optional yang betul-betul bebas dipilih/dibuang */}
-                    <option value="">-- Tiada Server (Abaikan) --</option>
+                    <option value="Tiada">-- Tiada (Abaikan) --</option>
                     {[...Array(7)].map((_, i) => (
                       <option key={i} value={`Server ${i + 1}`} className="text-slate-900">Server {i + 1}</option>
                     ))}
@@ -243,8 +242,7 @@ const ICTLog = ({ onBack }) => {
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Semester</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.semester}</td></tr>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Lokasi Makmal</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.lokasi}</td></tr>
               
-              {/* Akan papar nombor server HANYA JIKA ada pilihan server yang dipilih */}
-              {formData.lokasi === 'Lab Server' && formData.noserver && (
+              {formData.lokasi === 'Lab Server' && formData.noserver && formData.noserver !== 'Tiada' && (
                 <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Server</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.noserver}</td></tr>
               )}
               
