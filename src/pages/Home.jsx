@@ -20,7 +20,7 @@ const Home = ({ onOpenForm, onOpenModal }) => {
             Integrated Facility<br className="hidden sm:block" /> Management System
           </h1>
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-            Portal Rasmi pengurusan fasiliti dan peralatan ICT bagi Bengkel Teknologi Komputer (Rangkaian) ADTEC JTM Kampus Sandakan.
+            Portal rasmi pengurusan fasiliti dan peralatan ICT bagi Bengkel Teknologi Komputer (Rangkaian) ADTEC JTM Kampus Sandakan.
           </p>
         </div>
 
