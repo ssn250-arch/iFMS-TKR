@@ -1,77 +1,62 @@
 import React from 'react';
-import { Wrench, Lock, MonitorSmartphone, ArrowRight } from 'lucide-react';
+import { MonitorSmartphone, Wrench } from 'lucide-react';
 
-const Home = ({ onOpenForm, onOpenModal }) => {
+const Home = ({ onOpenForm, onOpenAduan }) => {
   return (
-    <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative fade-in">
-      {/* Kesan Cahaya (Glow Effects) */}
-      <div className="absolute top-10 left-1/4 w-64 h-64 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse pointer-events-none"></div>
-      <div 
-        className="absolute bottom-10 right-1/4 w-64 h-64 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse pointer-events-none" 
-        style={{ animationDelay: '2s' }}
-      ></div>
+    <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 fade-in relative z-10 w-full max-w-7xl mx-auto">
+      
+      {/* Bahagian Header Utama */}
+      <div className="text-center mb-8 sm:mb-12">
+         <div className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase mb-4 shadow-sm border border-blue-100">Portal Rasmi</div>
+         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight mb-4 sm:mb-6 leading-tight">
+           Integrated Facility <br className="hidden sm:block" /> Management System
+         </h1>
+         <p className="text-slate-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+           Pusat sehenti pengurusan fasiliti dan peralatan ICT bagi Jabatan Teknologi Komputer (Rangkaian) ADTEC Sandakan.
+         </p>
+      </div>
 
-      <div className="max-w-5xl w-full mx-auto relative z-10">
-        <div className="text-center mb-12 sm:mb-16 mt-8">
-          <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-blue-100 border border-blue-200 text-blue-800 text-xs sm:text-sm font-semibold tracking-wide uppercase shadow-sm">
-            Portal Rasmi
-          </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight leading-tight">
-            Integrated Facility<br className="hidden sm:block" /> Management System
-          </h1>
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-            Pusat sehenti pengurusan fasiliti dan peralatan ICT bagi Jabatan Teknologi Komputer (Rangkaian) ADTEC Sandakan.
-          </p>
-        </div>
+      {/* Bahagian Kad Menu */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 w-full max-w-5xl">
+         
+         {/* KAD 1: Log Penggunaan */}
+         <div className="glass-panel rounded-[2rem] p-6 sm:p-8 card-hover-effect flex flex-col h-full bg-white relative overflow-hidden">
+            <div className="flex justify-between items-start mb-6 sm:mb-8">
+               <div className="bg-blue-50 text-blue-600 p-4 rounded-2xl shadow-inner">
+                  <MonitorSmartphone size={32} strokeWidth={1.5} />
+               </div>
+               <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-emerald-100 shadow-sm">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Aktif
+               </span>
+            </div>
+            <div className="flex-grow">
+               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3">Log Penggunaan Peralatan ICT</h2>
+               <p className="text-slate-500 text-sm leading-relaxed">Pendaftaran masuk untuk pelajar sebelum menggunakan kemudahan makmal, PC, atau pelayan (server).</p>
+            </div>
+            <button onClick={onOpenForm} className="w-full mt-6 bg-slate-900 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-200 transition-all active:scale-95 text-sm sm:text-base">
+               Akses Log Masuk
+            </button>
+         </div>
 
-        {/* Grid Menu Utama */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
-          
-          
+         {/* KAD 2: Aduan Kerosakan ICT */}
+         <div className="glass-panel rounded-[2rem] p-6 sm:p-8 card-hover-effect flex flex-col h-full bg-white relative overflow-hidden">
+            <div className="flex justify-between items-start mb-6 sm:mb-8">
+               <div className="bg-indigo-50 text-indigo-600 p-4 rounded-2xl shadow-inner">
+                  <Wrench size={32} strokeWidth={1.5} />
+               </div>
+               <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-emerald-100 shadow-sm">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Aktif
+               </span>
+            </div>
+            <div className="flex-grow">
+               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3">Aduan Kerosakan ICT</h2>
+               <p className="text-slate-500 text-sm leading-relaxed">Sistem pelaporan masalah teknikal, kerosakan PC, atau isu rangkaian untuk tindakan penyelenggaraan.</p>
+            </div>
+            <button onClick={onOpenAduan} className="w-full mt-6 bg-slate-900 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200 transition-all active:scale-95 text-sm sm:text-base">
+               Akses Portal Aduan
+            </button>
+         </div>
 
-          {/* KAD 1: Log Penggunaan Peralatan ICT (Aktif) */}
-          <button 
-            onClick={onOpenForm} 
-            className="text-left w-full card-hover-effect group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg block overflow-hidden isolate outline-none focus:ring-4 focus:ring-blue-500/30"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-            <div className="absolute top-6 right-6 flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 shadow-sm">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-              Aktif
-            </div>
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-blue-50 group-hover:scale-110 transition-transform duration-500">
-              <MonitorSmartphone className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">Log Penggunaan Peralatan ICT</h2>
-            <p className="text-sm sm:text-base text-slate-500 mb-6">Pendaftaran masuk untuk pelajar sebelum menggunakan kemudahan PC, pelayan, dan makmal TKR.</p>
-            <div className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm group-hover:gap-3 transition-all">
-              <span>Buka Borang Sekarang</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </button>
-          
-        {/* KAD 2: Aduan Kerosakan ICT (Dalam Pembinaan) */}
-          <div 
-            onClick={onOpenModal} 
-            className="card-hover-effect group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg cursor-pointer overflow-hidden isolate"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-            <div className="absolute top-6 right-6 flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm">
-              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-              Dalam Pembinaan
-            </div>
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-slate-100 group-hover:from-orange-100 group-hover:to-red-100 transition-colors duration-300">
-              <Wrench className="w-8 h-8 sm:w-10 sm:h-10 text-slate-500 group-hover:text-orange-600 transition-colors duration-300" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-3 group-hover:text-orange-700 transition-colors">Aduan Kerosakan ICT</h2>
-            <p className="text-sm sm:text-base text-slate-500 mb-6">Sistem pelaporan masalah teknikal, kerosakan PC, atau isu rangkaian untuk tindakan penyelenggaraan.</p>
-            <div className="inline-flex items-center gap-2 text-slate-400 font-semibold text-sm group-hover:text-orange-600 transition-colors">
-              <span>Akses Disekat Buat Masa Ini</span>
-              <Lock className="w-4 h-4" />
-            </div>
-          </div>
-
-        </div>
       </div>
     </main>
   );
