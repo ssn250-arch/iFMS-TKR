@@ -2,7 +2,7 @@
   "name": "ifms-tkr",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://ssn250-arch.github.io/ifms-tkr",
+  "homepage": "https://ssn250-arch.github.io/iFMS-TKR",
   "type": "module",
   "scripts": {
     "dev": "vite",
