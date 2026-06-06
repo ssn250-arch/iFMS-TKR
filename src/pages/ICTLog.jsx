@@ -1,35 +1,43 @@
 import React, { useState, useRef } from 'react';
 import { User, IdCard, MapPin, Server, PcCase, Calendar, Clock, ClipboardList, Send, Loader2, CheckCircle } from 'lucide-react';
-import html2canvas from 'html2canvas-pro'; 
+import html2canvas from 'html2canvas-pro'; // Guna versi pro untuk elak error Tailwind oklch
 import jsPDF from 'jspdf';
-import logo from '../assets/logo.png'; 
+import logo from '../assets/logo.png'; // Pastikan path logo betul
 
 const ICTLog = ({ onBack }) => {
+  // 1. State untuk simpan semua input pengguna
   const [formData, setFormData] = useState({
     nama: '', matrik: '', lokasi: '', noserver: '', nopc: '', tarikh: '', masaGuna: '', tujuan: ''
   });
   
+  // State untuk kawal UI (butang loading & mesej berjaya)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
+  // useRef untuk pegang template PDF rahsia
   const pdfRef = useRef(null);
 
+  // 2. Fungsi untuk kemas kini state bila pengguna menaip
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 3. Fungsi Utama: Hantar Borang & Jana PDF
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Formatkan tarikh (DD/MM/YYYY)
     const tarikhParts = formData.tarikh.split('-');
     const tarikhFormatted = tarikhParts.length === 3 ? `${tarikhParts[2]}/${tarikhParts[1]}/${tarikhParts[0]}` : formData.tarikh;
     const masaRekod = new Date().toLocaleString('ms-MY', { dateStyle: 'full', timeStyle: 'short' });
 
+    // Masukkan tarikh format terus ke dalam template PDF
     document.getElementById('pdf-tarikh-display').innerText = tarikhFormatted;
     document.getElementById('pdf-masa-rekod').innerText = masaRekod;
 
     try {
+      // PROSES JANA PDF
       const element = pdfRef.current;
       const canvas = await html2canvas(element, { scale: 1.2, logging: false, useCORS: true });
       const imgData = canvas.toDataURL('image/jpeg', 0.8);
@@ -39,14 +47,16 @@ const ICTLog = ({ onBack }) => {
 
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
+      // Sediakan nama fail PDF
       const safeName = formData.nama.replace(/[^a-zA-Z0-9]/g, '_');
       const safeLokasi = formData.lokasi.replace(/[^a-zA-Z0-9]/g, '');
-      const serverPart = formData.noserver ? `_${formData.noserver.replace(/\s+/g, '')}` : '';
-      const fileName = `Log_${safeLokasi}${serverPart}_${formData.nopc}_${safeName}.pdf`;
+      const fileName = `Log_${safeLokasi}_${formData.nopc}_${safeName}.pdf`;
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
 
+      // HANTAR KE GOOGLE APPS SCRIPT
       const scriptURL = 'https://script.google.com/macros/s/AKfycby_rBOx4PAO8gAN1Hzzx2XKSBD2iDinACJ4Q_15pHtt9zL3MsPq7DeScvRka-tL6rWi7w/exec';
       
+      // Fetch berjalan di belakang (fire and forget)
       fetch(scriptURL, {
         method: 'POST',
         body: JSON.stringify({ fileName: fileName, fileData: pdfBase64, lokasi: formData.lokasi }),
@@ -54,8 +64,10 @@ const ICTLog = ({ onBack }) => {
         redirect: "follow"
       }).catch(err => console.error("Ralat background upload:", err));
 
+      // 4. Tunjuk Animasi Berjaya
       setShowSuccess(true);
       
+      // 5. Reset form dan kembali ke Home selepas 2.5 saat
       setTimeout(() => {
         setFormData({ nama: '', matrik: '', lokasi: '', noserver: '', nopc: '', tarikh: '', masaGuna: '', tujuan: '' });
         setIsSubmitting(false);
@@ -102,25 +114,25 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Lokasi (Lab) <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><MapPin className="w-5 h-5 text-slate-400" /></div>
-                <select name="lokasi" value={formData.lokasi} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.lokasi ? 'text-slate-400' : 'text-slate-900'}`}>
-                  <option value="" disabled hidden>Pilih lokasi makmal</option>
-                  <option value="Lab Aplikasi" className="text-slate-900">Lab Aplikasi</option>
-                  <option value="Lab Server" className="text-slate-900">Lab Server</option>
-                  <option value="Lab Troubleshooting" className="text-slate-900">Lab Troubleshooting</option>
-                  <option value="Lab Maintenance" className="text-slate-900">Lab Maintenance</option>
+                <select name="lokasi" value={formData.lokasi} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base">
+                  <option value="" disabled hidden>Pilih Makmal</option>
+                  <option value="Lab Aplikasi">Lab Aplikasi</option>
+                  <option value="Lab Server">Lab Server</option>
+                  <option value="Lab Troubleshooting">Lab Troubleshooting</option>
+                  <option value="Lab Maintenance">Lab Maintenance</option>
                 </select>
               </div>
             </div>
 
             {formData.lokasi === 'Lab Server' && (
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Server <span className="text-slate-400 font-normal text-xs ml-1">(Pilihan)</span></label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Server <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Server className="w-5 h-5 text-slate-400" /></div>
-                  <select name="noserver" value={formData.noserver} onChange={handleChange} className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.noserver ? 'text-slate-400' : 'text-slate-900'}`}>
-                    <option value="" disabled hidden>Pilih nombor server</option>
+                  <select name="noserver" value={formData.noserver} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base">
+                    <option value="" disabled hidden>Pilih Server</option>
                     {[...Array(7)].map((_, i) => (
-                      <option key={i} value={`Server ${i + 1}`} className="text-slate-900">Server {i + 1}</option>
+                      <option key={i} value={`Server ${i + 1}`}>Server {i + 1}</option>
                     ))}
                   </select>
                 </div>
@@ -131,10 +143,10 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">No. PC <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><PcCase className="w-5 h-5 text-slate-400" /></div>
-                <select name="nopc" value={formData.nopc} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.nopc ? 'text-slate-400' : 'text-slate-900'}`}>
-                  <option value="" disabled hidden>Sila pilih PC</option>
+                <select name="nopc" value={formData.nopc} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base">
+                  <option value="" disabled hidden>Pilih PC</option>
                   {[...Array(30)].map((_, i) => (
-                    <option key={i} value={`PC ${i + 1}`} className="text-slate-900">PC {i + 1}</option>
+                    <option key={i} value={`PC ${i + 1}`}>PC {i + 1}</option>
                   ))}
                 </select>
               </div>
@@ -144,14 +156,7 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Tarikh Penggunaan <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Calendar className="w-5 h-5 text-slate-400" /></div>
-                <input 
-                  type="date" 
-                  name="tarikh" 
-                  value={formData.tarikh} 
-                  onChange={handleChange} 
-                  required 
-                  className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base ${!formData.tarikh ? 'text-slate-400' : 'text-slate-900'}`} 
-                />
+                <input type="date" name="tarikh" value={formData.tarikh} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" />
               </div>
             </div>
 
@@ -159,14 +164,7 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Masa Penggunaan <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Clock className="w-5 h-5 text-slate-400" /></div>
-                <input 
-                  type="time" 
-                  name="masaGuna" 
-                  value={formData.masaGuna} 
-                  onChange={handleChange} 
-                  required 
-                  className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base ${!formData.masaGuna ? 'text-slate-400' : 'text-slate-900'}`} 
-                />
+                <input type="time" name="masaGuna" value={formData.masaGuna} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" />
               </div>
             </div>
 
@@ -174,7 +172,7 @@ const ICTLog = ({ onBack }) => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">Tujuan Penggunaan <span className="text-red-500">*</span></label>
               <div className="relative">
                 <div className="absolute top-3.5 left-3 flex items-start pointer-events-none"><ClipboardList className="w-5 h-5 text-slate-400" /></div>
-                <textarea name="tujuan" value={formData.tujuan} onChange={handleChange} rows="3" required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base placeholder:text-slate-400" placeholder="Contoh: Menyiapkan tugasan AutoCAD, carian internet..."></textarea>
+                <textarea name="tujuan" value={formData.tujuan} onChange={handleChange} rows="3" required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" placeholder="Contoh: Menyiapkan tugasan AutoCAD, carian internet..."></textarea>
               </div>
             </div>
 
@@ -188,6 +186,7 @@ const ICTLog = ({ onBack }) => {
           </div>
         </form>
 
+        {/* Paparan State Berjaya (Overlay) */}
         {showSuccess && (
           <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl p-8 text-center transition-all duration-300">
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5 text-emerald-600 animate-bounce">
@@ -204,23 +203,29 @@ const ICTLog = ({ onBack }) => {
           ========================================== */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         
+        {/* KOTAK LUAR: Moden & Minimalis (Border nipis, padding luas) */}
         <div ref={pdfRef} style={{ width: '800px', backgroundColor: '#ffffff', padding: '50px', border: '1px solid #cbd5e1', borderRadius: '12px', fontFamily: '"Poppins", sans-serif', color: '#334155' }}>
           
+          {/* HEADER PDF */}
           <div style={{ textAlign: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '25px', marginBottom: '30px' }}>
+            
+            {/* CARA KEBAL CENTERKAN LOGO UNTUK HTML2CANVAS */}
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '20px' }}>
               <img src={logo} alt="Logo ADTEC" style={{ height: '85px', width: 'auto', objectFit: 'contain' }} />
             </div>
+            
             <h1 style={{ color: '#0f172a', margin: '0', fontSize: '22px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REKOD PENGGUNAAN MAKMAL KOMPUTER</h1>
             <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>TKR ADTEC JTM Kampus Sandakan</p>
           </div>
 
+          {/* JADUAL DATA: Garis dashed minimalis */}
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '15px' }}>
             <tbody>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', width: '35%', fontWeight: '600' }}>Nama Pelajar</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', width: '5%' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.nama}</td></tr>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Matrik</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.matrik}</td></tr>
               <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Lokasi Makmal</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.lokasi}</td></tr>
               
-              {formData.lokasi === 'Lab Server' && formData.noserver && (
+              {formData.lokasi === 'Lab Server' && (
                 <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Server</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.noserver}</td></tr>
               )}
               
@@ -232,6 +237,7 @@ const ICTLog = ({ onBack }) => {
             </tbody>
           </table>
           
+          {/* FOOTER PDF */}
           <div style={{ marginTop: '50px', fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
             <p style={{ margin: 0 }}>Dokumen ini dijana secara automatik oleh Sistem E-Log Makmal Komputer.</p>
           </div>
