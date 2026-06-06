@@ -1,10 +1,15 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import ICTLog from "./pages/ICTLog";
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-600">
-      <h1 className="text-5xl font-bold text-white">
-        iFMS-TKR React Version
-      </h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/elog" element={<ICTLog />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
