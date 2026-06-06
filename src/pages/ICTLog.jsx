@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { User, IdCard, MapPin, Server, PcCase, Calendar, Clock, ClipboardList, Send, Loader2, CheckCircle } from 'lucide-react';
-import html2canvas from 'html2canvas-pro';
+import html2canvas from 'html2canvas-pro'; // Guna versi pro untuk elak error Tailwind oklch
 import jsPDF from 'jspdf';
-import logo from '../assets/logo.png'; // Pastikan path logo ni betul dengan folder kau
+import logo from '../assets/logo.png'; // Pastikan path logo betul
 
 const ICTLog = ({ onBack }) => {
-  // 1. Guna state untuk simpan semua input pengguna
+  // 1. State untuk simpan semua input pengguna
   const [formData, setFormData] = useState({
     nama: '', matrik: '', lokasi: '', noserver: '', nopc: '', tarikh: '', masaGuna: '', tujuan: ''
   });
@@ -14,7 +14,7 @@ const ICTLog = ({ onBack }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
-  // useRef ni ganti document.getElementById('pdf-template')
+  // useRef untuk pegang template PDF rahsia
   const pdfRef = useRef(null);
 
   // 2. Fungsi untuk kemas kini state bila pengguna menaip
@@ -202,33 +202,48 @@ const ICTLog = ({ onBack }) => {
           TEMPLATE PDF TERSEMBUNYI (DISOROK DARI UI)
           ========================================== */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <div ref={pdfRef} style={{ width: '800px', backgroundColor: 'white', padding: '40px', border: '2px solid #1e3a8a', borderRadius: '10px', fontFamily: 'sans-serif' }}>
-          <div style={{ textAlign: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '20px', marginBottom: '20px' }}>
-            <img src={logo} alt="Logo ADTEC" style={{ height: '80px', width: 'auto', marginBottom: '15px', objectFit: 'contain' }} />
-            <h1 style={{ color: '#1e3a8a', margin: '0', fontSize: '24px' }}>REKOD PENGGUNAAN MAKMAL KOMPUTER</h1>
-            <p style={{ color: '#64748b', margin: '5px 0 0 0', fontSize: '14px' }}>TKR ADTEC JTM Kampus Sandakan</p>
+        
+        {/* KOTAK LUAR: Moden & Minimalis (Border nipis, padding luas) */}
+        <div ref={pdfRef} style={{ width: '800px', backgroundColor: '#ffffff', padding: '50px', border: '1px solid #cbd5e1', borderRadius: '12px', fontFamily: '"Poppins", sans-serif', color: '#334155' }}>
+          
+          {/* HEADER PDF */}
+          <div style={{ textAlign: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '25px', marginBottom: '30px' }}>
+            
+            {/* CARA KEBAL CENTERKAN LOGO UNTUK HTML2CANVAS */}
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '20px' }}>
+              <img src={logo} alt="Logo ADTEC" style={{ height: '85px', width: 'auto', objectFit: 'contain' }} />
+            </div>
+            
+            <h1 style={{ color: '#0f172a', margin: '0', fontSize: '22px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REKOD PENGGUNAAN MAKMAL KOMPUTER</h1>
+            <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>TKR ADTEC JTM Kampus Sandakan</p>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+
+          {/* JADUAL DATA: Garis dashed minimalis */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '15px' }}>
             <tbody>
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', width: '30%', fontWeight: 'bold', color: '#334155' }}>Nama Pelajar</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', width: '5%' }}>:</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{formData.nama}</td></tr>
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>No. Matrik</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{formData.matrik}</td></tr>
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>Lokasi Makmal</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{formData.lokasi}</td></tr>
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', width: '35%', fontWeight: '600' }}>Nama Pelajar</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', width: '5%' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.nama}</td></tr>
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Matrik</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.matrik}</td></tr>
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Lokasi Makmal</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.lokasi}</td></tr>
+              
               {formData.lokasi === 'Lab Server' && (
-                <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>No. Server</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{formData.noserver}</td></tr>
+                <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. Server</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.noserver}</td></tr>
               )}
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>No. PC</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{formData.nopc}</td></tr>
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>Tarikh Penggunaan</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td id="pdf-tarikh-display" style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}></td></tr>
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>Masa Penggunaan</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{formData.masaGuna}</td></tr>
-              <tr><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#334155' }}>Tarikh & Masa Rekod Dijana</td><td style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>:</td><td id="pdf-masa-rekod" style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}></td></tr>
-              <tr><td style={{ padding: '12px 0', fontWeight: 'bold', color: '#334155', verticalAlign: 'top' }}>Tujuan Penggunaan</td><td style={{ padding: '12px 0', verticalAlign: 'top' }}>:</td><td style={{ padding: '12px 0', color: '#0f172a' }}>{formData.tujuan}</td></tr>
+              
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>No. PC</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.nopc}</td></tr>
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Tarikh Penggunaan</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td id="pdf-tarikh-display" style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}></td></tr>
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Masa Penggunaan</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}>{formData.masaGuna}</td></tr>
+              <tr><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', fontWeight: '600' }}>Tarikh & Masa Rekod Dijana</td><td style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>:</td><td id="pdf-masa-rekod" style={{ padding: '14px 0', borderBottom: '1px dashed #e2e8f0', color: '#0f172a' }}></td></tr>
+              <tr><td style={{ padding: '14px 0', fontWeight: '600', verticalAlign: 'top' }}>Tujuan Penggunaan</td><td style={{ padding: '14px 0', verticalAlign: 'top' }}>:</td><td style={{ padding: '14px 0', color: '#0f172a' }}>{formData.tujuan}</td></tr>
             </tbody>
           </table>
-          <div style={{ marginTop: '40px', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>
-            <p>Dokumen ini dijana secara automatik oleh Sistem E-Log Makmal Komputer.</p>
+          
+          {/* FOOTER PDF */}
+          <div style={{ marginTop: '50px', fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
+            <p style={{ margin: 0 }}>Dokumen ini dijana secara automatik oleh Sistem E-Log Makmal Komputer.</p>
           </div>
+          
         </div>
       </div>
-
     </main>
   );
 };
