@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import ICTLog from './pages/ICTLog';
-import AduanICT from './pages/AduanICT'; 
+import ICTLog from './pages/ICTLog'; 
 import ConstructionModal from './components/ConstructionModal';
 
 function App() {
