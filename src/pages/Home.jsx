@@ -17,7 +17,7 @@ const Home = ({ onOpenForm, onOpenModal }) => {
             Portal Rasmi
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight leading-tight">
-            Integrated Facility<br className="hidden sm:block" /> Management System
+            Integrated ICT Facility<br className="hidden sm:block" /> Management System
           </h1>
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-medium">
             Portal rasmi pengurusan fasiliti dan peralatan ICT bagi Bengkel Teknologi Komputer (Rangkaian) ADTEC JTM Kampus Sandakan.
