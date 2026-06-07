@@ -7,6 +7,9 @@ import logo from '../assets/logo.png';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from 'firebase/firestore';
 
+// ==========================================
+// ⚠️ MASUKKAN CONFIG FIREBASE KAU DI SINI
+// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyDxQbSs1KNzTcqGQ0qoaG8ul8Is3ITESCA",
   authDomain: "servedesk-adtec.firebaseapp.com",
@@ -34,7 +37,6 @@ const ICTLog = ({ onBack }) => {
   const [filterLab, setFilterLab] = useState('Semua Makmal');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Ref dan state khas untuk download PDF Admin
   const adminPdfRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -131,18 +133,15 @@ const ICTLog = ({ onBack }) => {
     return matchesLab && matchesSearch;
   });
 
-  // FUNGSI UNTUK DOWNLOAD LAPORAN ADMIN KE PDF
   const downloadAdminReport = async () => {
     if (filteredLogs.length === 0) return alert("Tiada rekod untuk dimuat turun.");
     setIsDownloading(true);
     
     try {
       const element = adminPdfRef.current;
-      // Tingkatkan scale untuk kualiti teks PDF yang tajam
       const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
       const imgData = canvas.toDataURL('image/png');
       
-      // Format 'l' bermaksud Landscape (melintang) untuk jadual
       const pdf = new jsPDF('l', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
@@ -307,7 +306,6 @@ const ICTLog = ({ onBack }) => {
               </div>
             </div>
             
-            {/* Butang Muat Turun & Keluar */}
             <div className="flex flex-wrap gap-3">
               <button 
                 onClick={downloadAdminReport} 
@@ -422,6 +420,12 @@ const ICTLog = ({ onBack }) => {
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         <div ref={adminPdfRef} style={{ width: '1123px', padding: '40px', backgroundColor: '#ffffff', color: '#000000', fontFamily: 'Arial, sans-serif' }}>
            <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '3px solid #1e293b', paddingBottom: '15px' }}>
+               
+               {/* LOGO DITAMBAH DI SINI (ALIGN CENTER) */}
+               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '15px' }}>
+                   <img src={logo} alt="Logo ADTEC" style={{ height: '85px', width: 'auto', objectFit: 'contain' }} />
+               </div>
+               
                <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', textTransform: 'uppercase' }}>LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT</h2>
                <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: {new Date().toLocaleDateString('ms-MY')}</p>
            </div>
