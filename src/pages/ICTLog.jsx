@@ -1,12 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, IdCard, BookOpen, MapPin, Server, PcCase, Calendar, Clock, ClipboardList, Send, Loader2, CheckCircle, Lock, LogOut, Filter, Search, FileSpreadsheet } from 'lucide-react';
+import { User, IdCard, BookOpen, MapPin, Server, PcCase, Calendar, Clock, ClipboardList, Send, Loader2, CheckCircle, Lock, LogOut, Filter, Search, Download } from 'lucide-react';
 import html2canvas from 'html2canvas-pro'; 
 import jsPDF from 'jspdf';
 import logo from '../assets/logo.png'; 
 
-// ==========================================
-// 1. SETUP FIREBASE (Guna config yang sama macam AduanICT)
-// ==========================================
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from 'firebase/firestore';
 
@@ -19,12 +16,10 @@ const firebaseConfig = {
   appId: "1:1047170959965:web:d610c273dc130a44e75bb4"
 };
 
-// Elak ralat "Firebase already initialized"
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 const ICTLog = ({ onBack }) => {
-  // STATE BORANG PELAJAR
   const [formData, setFormData] = useState({
     nama: '', matrik: '', semester: '', lokasi: '', noserver: '', nopc: '', tarikh: '', masaGuna: '', tujuan: ''
   });
@@ -32,20 +27,21 @@ const ICTLog = ({ onBack }) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const pdfRef = useRef(null);
 
-  // STATE ADMIN PORTAL
-  const [viewMode, setViewMode] = useState('form'); // 'form' | 'adminLogin' | 'adminDashboard'
+  const [viewMode, setViewMode] = useState('form');
   const [loginInput, setLoginInput] = useState({ username: '', pass: '' });
   const [loginError, setLoginError] = useState('');
   const [logs, setLogs] = useState([]);
   const [filterLab, setFilterLab] = useState('Semua Makmal');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Ref dan state khas untuk download PDF Admin
+  const adminPdfRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  // 2. FUNGSI HANDLE INPUT BORANG
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 3. FUNGSI HANTAR BORANG & JANA PDF
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -58,14 +54,12 @@ const ICTLog = ({ onBack }) => {
     document.getElementById('pdf-masa-rekod').innerText = masaRekod;
 
     try {
-      // A: SIMPAN KE FIREBASE (Untuk rujukan Admin)
       await addDoc(collection(db, 'ict_usage_logs'), {
         ...formData,
         tarikhFormatted: tarikhFormatted,
         timestamp: serverTimestamp()
       });
 
-      // B: JANA PDF & HANTAR KE GOOGLE DRIVE
       const element = pdfRef.current;
       const canvas = await html2canvas(element, { scale: 1.2, logging: false, useCORS: true });
       const imgData = canvas.toDataURL('image/jpeg', 0.8);
@@ -106,7 +100,6 @@ const ICTLog = ({ onBack }) => {
     }
   };
 
-  // 4. FUNGSI ADMIN LOGIN
   const handleAdminLogin = (e) => {
     e.preventDefault();
     if (loginInput.username === 'admin' && loginInput.pass === '12345678') {
@@ -118,13 +111,11 @@ const ICTLog = ({ onBack }) => {
     }
   };
 
-  // 5. TARIK DATA LOG DARI FIREBASE SECARA REAL-TIME
   useEffect(() => {
     if (viewMode === 'adminDashboard') {
       const q = query(collection(db, 'ict_usage_logs'));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Susun dari yang terbaru ke paling lama
         data.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
         setLogs(data);
       });
@@ -132,7 +123,6 @@ const ICTLog = ({ onBack }) => {
     }
   }, [viewMode]);
 
-  // 6. FUNGSI FILTER & SEARCH ADMIN
   const filteredLogs = logs.filter(log => {
     const matchesLab = filterLab === 'Semua Makmal' || log.lokasi === filterLab;
     const matchesSearch = log.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -141,27 +131,38 @@ const ICTLog = ({ onBack }) => {
     return matchesLab && matchesSearch;
   });
 
-  // ==========================================
-  // PAPARAN KAWALAN UTAMA (CONDITIONAL RENDERING)
-  // ==========================================
+  // FUNGSI UNTUK DOWNLOAD LAPORAN ADMIN KE PDF
+  const downloadAdminReport = async () => {
+    if (filteredLogs.length === 0) return alert("Tiada rekod untuk dimuat turun.");
+    setIsDownloading(true);
+    
+    try {
+      const element = adminPdfRef.current;
+      // Tingkatkan scale untuk kualiti teks PDF yang tajam
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Format 'l' bermaksud Landscape (melintang) untuk jadual
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Laporan_Log_ICT_${new Date().toLocaleDateString('ms-MY').replace(/\//g, '-')}.pdf`);
+    } catch (error) {
+      console.error("Gagal menjana PDF:", error);
+      alert("Ralat teknikal semasa memuat turun laporan.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <main className="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8 fade-in relative w-full">
       
-      {/* -------------------------------------------
-          PAPARAN 1: BORANG PELAJAR
-          ------------------------------------------- */}
       {viewMode === 'form' && (
         <div className="glass-panel w-full max-w-2xl rounded-2xl p-6 sm:p-10 relative overflow-hidden shadow-lg border border-slate-200 bg-white">
-          
-          {/* Butang Admin Rahsia */}
-          <button 
-            onClick={() => setViewMode('adminLogin')} 
-            className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 rounded-full transition-all"
-            title="Log Masuk Admin"
-          >
-            <Lock size={18} />
-          </button>
-
+          <button onClick={() => setViewMode('adminLogin')} className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 rounded-full transition-all" title="Log Masuk Admin"><Lock size={18} /></button>
           <div className="text-center mb-8 relative z-10">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Pendaftaran Penggunaan</h1>
             <p className="text-slate-500 text-xs sm:text-sm">Sila lengkapkan maklumat di bawah sebelum menggunakan kemudahan makmal.</p>
@@ -176,7 +177,6 @@ const ICTLog = ({ onBack }) => {
                   <input type="text" name="nama" value={formData.nama} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" placeholder="Masukkan nama penuh anda" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">No. Matrik <span className="text-red-500">*</span></label>
                 <div className="relative">
@@ -184,37 +184,34 @@ const ICTLog = ({ onBack }) => {
                   <input type="text" name="matrik" value={formData.matrik} onChange={handleChange} required className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" placeholder="Contoh: 123456" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Semester <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><BookOpen className="w-5 h-5 text-slate-400" /></div>
                   <select name="semester" value={formData.semester} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.semester ? 'text-slate-400' : 'text-slate-900'}`}>
                     <option value="" disabled hidden>Pilih semester</option>
-                    <option value="Semester 1" className="text-slate-900">Semester 1</option>
-                    <option value="Semester 2" className="text-slate-900">Semester 2</option>
-                    <option value="Semester 3" className="text-slate-900">Semester 3</option>
-                    <option value="Semester 4" className="text-slate-900">Semester 4</option>
-                    <option value="Semester 5" className="text-slate-900">Semester 5</option>
-                    <option value="Semester 6" className="text-slate-900">Semester 6</option>
+                    <option value="Semester 1">Semester 1</option>
+                    <option value="Semester 2">Semester 2</option>
+                    <option value="Semester 3">Semester 3</option>
+                    <option value="Semester 4">Semester 4</option>
+                    <option value="Semester 5">Semester 5</option>
+                    <option value="Semester 6">Semester 6</option>
                   </select>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Lokasi (Lab) <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><MapPin className="w-5 h-5 text-slate-400" /></div>
                   <select name="lokasi" value={formData.lokasi} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.lokasi ? 'text-slate-400' : 'text-slate-900'}`}>
                     <option value="" disabled hidden>Pilih lokasi makmal</option>
-                    <option value="Lab Aplikasi" className="text-slate-900">Lab Aplikasi</option>
-                    <option value="Lab Server" className="text-slate-900">Lab Server</option>
-                    <option value="Lab Troubleshooting" className="text-slate-900">Lab Troubleshooting</option>
-                    <option value="Lab Maintenance" className="text-slate-900">Lab Maintenance</option>
+                    <option value="Lab Aplikasi">Lab Aplikasi</option>
+                    <option value="Lab Server">Lab Server</option>
+                    <option value="Lab Troubleshooting">Lab Troubleshooting</option>
+                    <option value="Lab Maintenance">Lab Maintenance</option>
                   </select>
                 </div>
               </div>
-
               {formData.lokasi === 'Lab Server' && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Server <span className="text-slate-400 font-normal text-xs ml-1">(Pilihan)</span></label>
@@ -222,23 +219,21 @@ const ICTLog = ({ onBack }) => {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Server className="w-5 h-5 text-slate-400" /></div>
                     <select name="noserver" value={formData.noserver || "Tiada"} onChange={handleChange} className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${(!formData.noserver || formData.noserver === 'Tiada') ? 'text-slate-400' : 'text-slate-900'}`}>
                       <option value="Tiada">-- Tiada (Abaikan) --</option>
-                      {[...Array(7)].map((_, i) => (<option key={i} value={`Server ${i + 1}`} className="text-slate-900">Server {i + 1}</option>))}
+                      {[...Array(7)].map((_, i) => (<option key={i} value={`Server ${i + 1}`}>Server {i + 1}</option>))}
                     </select>
                   </div>
                 </div>
               )}
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">No. PC <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><PcCase className="w-5 h-5 text-slate-400" /></div>
                   <select name="nopc" value={formData.nopc} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white text-base ${!formData.nopc ? 'text-slate-400' : 'text-slate-900'}`}>
                     <option value="" disabled hidden>Sila pilih PC</option>
-                    {[...Array(30)].map((_, i) => (<option key={i} value={`PC ${i + 1}`} className="text-slate-900">PC {i + 1}</option>))}
+                    {[...Array(30)].map((_, i) => (<option key={i} value={`PC ${i + 1}`}>PC {i + 1}</option>))}
                   </select>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Tarikh Penggunaan <span className="text-red-500">*</span></label>
                 <div className="relative">
@@ -246,7 +241,6 @@ const ICTLog = ({ onBack }) => {
                   <input type="date" name="tarikh" value={formData.tarikh} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base ${!formData.tarikh ? 'text-slate-400' : 'text-slate-900'}`} />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Masa Penggunaan <span className="text-red-500">*</span></label>
                 <div className="relative">
@@ -254,7 +248,6 @@ const ICTLog = ({ onBack }) => {
                   <input type="time" name="masaGuna" value={formData.masaGuna} onChange={handleChange} required className={`block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base ${!formData.masaGuna ? 'text-slate-400' : 'text-slate-900'}`} />
                 </div>
               </div>
-
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Tujuan Penggunaan <span className="text-red-500">*</span></label>
                 <div className="relative">
@@ -263,7 +256,6 @@ const ICTLog = ({ onBack }) => {
                 </div>
               </div>
             </div>
-
             <div className="pt-4">
               <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition-all transform active:scale-95 text-base disabled:opacity-70 disabled:cursor-not-allowed">
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
@@ -282,17 +274,12 @@ const ICTLog = ({ onBack }) => {
         </div>
       )}
 
-
-      {/* -------------------------------------------
-          PAPARAN 2: ADMIN LOGIN
-          ------------------------------------------- */}
       {viewMode === 'adminLogin' && (
         <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl p-10 md:p-16 max-w-md w-full relative overflow-hidden text-center animate-in fade-in slide-in-from-bottom-4">
             <button onClick={() => setViewMode('form')} className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 transition-colors">Batal</button>
             <div className="bg-indigo-50 text-indigo-600 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto mb-6"><Lock size={32} /></div>
             <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">LOG MASUK ADMIN</h2>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2 mb-10">Pangkalan Data ICT Log</p>
-            
             <form onSubmit={handleAdminLogin} className="space-y-6 text-left">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 block">Username</label>
@@ -308,14 +295,9 @@ const ICTLog = ({ onBack }) => {
         </div>
       )}
 
-
-      {/* -------------------------------------------
-          PAPARAN 3: ADMIN DASHBOARD (SEJARAH)
-          ------------------------------------------- */}
       {viewMode === 'adminDashboard' && (
         <div className="w-full max-w-7xl animate-in fade-in duration-500">
           
-          {/* Header Admin */}
           <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 mb-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-5">
               <div className="bg-indigo-600 p-4 rounded-3xl shadow-xl shadow-indigo-100 text-white"><ClipboardList size={32} /></div>
@@ -324,12 +306,24 @@ const ICTLog = ({ onBack }) => {
                 <p className="text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] mt-3">Sistem Pemantauan Makmal ADTEC</p>
               </div>
             </div>
-            <button onClick={() => setViewMode('form')} className="bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all">
-              <LogOut size={16} /> Tutup Portal
-            </button>
+            
+            {/* Butang Muat Turun & Keluar */}
+            <div className="flex flex-wrap gap-3">
+              <button 
+                onClick={downloadAdminReport} 
+                disabled={isDownloading || filteredLogs.length === 0}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-md shadow-emerald-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDownloading ? <Loader2 size={16} className="animate-spin"/> : <Download size={16} />} 
+                {isDownloading ? 'Menjana PDF...' : 'Muat Turun PDF'}
+              </button>
+
+              <button onClick={() => setViewMode('form')} className="bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-red-100">
+                <LogOut size={16} /> Tutup Portal
+              </button>
+            </div>
           </div>
 
-          {/* Tools: Search & Filter */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
             <div className="relative w-full md:flex-grow">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
@@ -347,7 +341,6 @@ const ICTLog = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Table Data */}
           <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -390,12 +383,11 @@ const ICTLog = ({ onBack }) => {
               Jumlah Rekod: {filteredLogs.length}
             </div>
           </div>
-
         </div>
       )}
 
       {/* ==========================================
-          TEMPLATE PDF TERSEMBUNYI (DISOROK DARI UI)
+          TEMPLATE PDF TERSEMBUNYI UNTUK PELAJAR
           ========================================== */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         <div ref={pdfRef} style={{ width: '800px', backgroundColor: '#ffffff', padding: '50px', border: '1px solid #cbd5e1', borderRadius: '12px', fontFamily: '"Poppins", sans-serif', color: '#334155' }}>
@@ -421,6 +413,45 @@ const ICTLog = ({ onBack }) => {
             </tbody>
           </table>
           <div style={{ marginTop: '50px', fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}><p style={{ margin: 0 }}>Dokumen ini dijana secara automatik oleh Sistem E-Log Makmal Komputer.</p></div>
+        </div>
+      </div>
+
+      {/* ==========================================
+          TEMPLATE PDF TERSEMBUNYI UNTUK ADMIN (TABLE)
+          ========================================== */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div ref={adminPdfRef} style={{ width: '1123px', padding: '40px', backgroundColor: '#ffffff', color: '#000000', fontFamily: 'Arial, sans-serif' }}>
+           <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '3px solid #1e293b', paddingBottom: '15px' }}>
+               <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', textTransform: 'uppercase' }}>LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT</h2>
+               <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: {new Date().toLocaleDateString('ms-MY')}</p>
+           </div>
+           
+           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginTop: '20px' }}>
+              <thead>
+                 <tr style={{ backgroundColor: '#f1f5f9', color: '#1e293b', textAlign: 'left' }}>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '5%', textAlign: 'center' }}>No.</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '25%' }}>Nama Pelajar & Matrik</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '10%', textAlign: 'center' }}>Semester</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>Lokasi Makmal</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>No. PC / Server</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>Tarikh & Masa</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>Tujuan</th>
+                 </tr>
+              </thead>
+              <tbody>
+                 {filteredLogs.map((log, index) => (
+                     <tr key={log.id}>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}><strong>{log.nama}</strong><br/><span style={{fontSize: '10px', color: '#64748b'}}>{log.matrik}</span></td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'center' }}>{log.semester}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.lokasi}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.nopc} {log.noserver && log.noserver !== 'Tiada' ? `(${log.noserver})` : ''}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.tarikhFormatted || log.tarikh}<br/><span style={{fontSize: '10px', color: '#64748b'}}>{log.masaGuna}</span></td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.tujuan}</td>
+                     </tr>
+                 ))}
+              </tbody>
+           </table>
         </div>
       </div>
     </main>
