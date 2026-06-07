@@ -139,14 +139,38 @@ const ICTLog = ({ onBack }) => {
     
     try {
       const element = adminPdfRef.current;
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
-      const imgData = canvas.toDataURL('image/png');
       
-      const pdf = new jsPDF('l', 'mm', 'a4');
+      // Tangkap KESELURUHAN ketinggian jadual walaupun ia panjang
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        scrollY: 0,
+        windowHeight: element.scrollHeight
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' untuk Landscape
+      
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      // 1. Masukkan gambar untuk muka surat pertama
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      // 2. Loop: Jika gambar masih panjang, tambah muka surat baru secara automatik
+      while (heightLeft > 0) {
+        position -= pageHeight; // Anjak gambar ke atas untuk paparkan sambungan bawah
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+      
       pdf.save(`Laporan_Log_ICT_${new Date().toLocaleDateString('ms-MY').replace(/\//g, '-')}.pdf`);
     } catch (error) {
       console.error("Gagal menjana PDF:", error);
