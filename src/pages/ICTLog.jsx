@@ -161,7 +161,7 @@ const ICTLog = ({ onBack }) => {
       
       {viewMode === 'form' && (
         <div className="glass-panel w-full max-w-2xl rounded-2xl p-6 sm:p-10 relative overflow-hidden shadow-lg border border-slate-200 bg-white">
-          <button onClick={() => setViewMode('adminLogin')} className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 rounded-full transition-all" title="Log Masuk Admin"><Lock size={18} /></button>
+          <button onClick={() => setViewMode('adminLogin')} className="absolute top-4 right-4 sm:top-6 sm:right-6 p-3 sm:p-2 bg-slate-100 hover:bg-indigo-100 text-slate-500 hover:text-indigo-600 rounded-full transition-all z-50 cursor-pointer shadow-sm active:scale-95" title="Log Masuk Admin"><Lock size={18} /></button>
           <div className="text-center mb-8 relative z-10">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Pendaftaran Penggunaan</h1>
             <p className="text-slate-500 text-xs sm:text-sm">Sila lengkapkan maklumat di bawah sebelum menggunakan kemudahan makmal.</p>
