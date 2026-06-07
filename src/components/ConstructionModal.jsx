@@ -23,7 +23,7 @@ const ConstructionModal = ({ onClose }) => {
           onClick={onClose} 
           className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95"
         >
-          Faham, Kembali
+          Kembali
         </button>
       </div>
     </div>
