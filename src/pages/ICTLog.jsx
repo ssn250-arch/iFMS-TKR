@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, IdCard, BookOpen, MapPin, Server, PcCase, Calendar, Clock, ClipboardList, Send, Loader2, CheckCircle, Lock, LogOut, Filter, Search, Download } from 'lucide-react';
 import html2canvas from 'html2canvas-pro'; 
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import logo from '../assets/logo.png'; 
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -138,40 +139,92 @@ const ICTLog = ({ onBack }) => {
     setIsDownloading(true);
     
     try {
-      const element = adminPdfRef.current;
-      
-      // Tangkap KESELURUHAN ketinggian jadual walaupun ia panjang
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true, 
-        logging: false,
-        scrollY: 0,
-        windowHeight: element.scrollHeight
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' untuk Landscape
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      let heightLeft = pdfHeight;
-      let position = 0;
+      // 1. Format Kertas: 'l' (Landscape), 'mm' (Milimeter), 'a4' (Saiz)
+      const pdf = new jsPDF('l', 'mm', 'a4'); 
 
-      // 1. Masukkan gambar untuk muka surat pertama
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      // 2. Loop: Jika gambar masih panjang, tambah muka surat baru secara automatik
-      while (heightLeft > 0) {
-        position -= pageHeight; // Anjak gambar ke atas untuk paparkan sambungan bawah
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+      // 2. Lukis Logo ADTEC (Ambil dari UI supaya tajam)
+      const logoElement = document.querySelector("img[alt='Logo ADTEC']");
+      if (logoElement) {
+          const canvas = document.createElement('canvas');
+          canvas.width = logoElement.naturalWidth || 500;
+          canvas.height = logoElement.naturalHeight || 200;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(logoElement, 0, 0, canvas.width, canvas.height);
+          const logoData = canvas.toDataURL('image/png');
+          
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const logoW = 35; // Lebar logo di PDF
+          const logoH = (canvas.height * logoW) / canvas.width; // Nisbah tinggi automatik
+          pdf.addImage(logoData, 'PNG', (pdfWidth - logoW) / 2, 10, logoW, logoH);
       }
-      
+
+      // 3. Susun Tajuk Utama Laporan
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT", pageWidth / 2, 35, { align: 'center' });
+
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(71, 85, 105); // Warna Slate-600
+      pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pageWidth / 2, 42, { align: 'center' });
+
+      // 4. Proses Data untuk AutoTable
+      const tableColumn = ["No.", "Nama Pelajar", "Matrik", "Sem", "Lokasi", "No. PC / Server", "Tarikh & Masa", "Tujuan"];
+      const tableRows = [];
+
+      filteredLogs.forEach((log, index) => {
+        tableRows.push([
+          index + 1,
+          log.nama,
+          log.matrik,
+          log.semester,
+          log.lokasi,
+          `${log.nopc}${log.noserver && log.noserver !== 'Tiada' ? `\n(${log.noserver})` : ''}`,
+          `${log.tarikhFormatted || log.tarikh}\n${log.masaGuna}`,
+          log.tujuan
+        ]);
+      });
+
+      // 5. Lukis Jadual Gred Profesional
+      autoTable(pdf, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 50, // Mula lukis jadual di bawah tajuk
+        theme: 'grid',
+        styles: { 
+          fontSize: 8, 
+          cellPadding: 4, 
+          textColor: [15, 23, 42], // Teks gelap
+          valign: 'middle' 
+        },
+        headStyles: { 
+          fillColor: [30, 41, 59], // Warna Slate-800
+          textColor: [255, 255, 255], 
+          halign: 'center' 
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 10 },
+          2: { halign: 'center', cellWidth: 20 },
+          3: { halign: 'center', cellWidth: 16 },
+          5: { cellWidth: 28 },
+          6: { cellWidth: 28 }
+        },
+        didDrawPage: function (data) {
+          // Tambah muka surat di setiap bahagian bawah kertas
+          pdf.setFontSize(8);
+          pdf.setTextColor(150);
+          pdf.text(
+            `Muka Surat ${data.pageNumber}`,
+            data.settings.margin.left,
+            pdf.internal.pageSize.getHeight() - 10
+          );
+        }
+      });
+
+      // 6. Simpan Fail
       pdf.save(`Laporan_Log_ICT_${new Date().toLocaleDateString('ms-MY').replace(/\//g, '-')}.pdf`);
+
     } catch (error) {
       console.error("Gagal menjana PDF:", error);
       alert("Ralat teknikal semasa memuat turun laporan.");
