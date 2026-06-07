@@ -317,7 +317,7 @@ const ICTLog = ({ onBack }) => {
               </button>
 
               <button onClick={() => setViewMode('form')} className="bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-red-100">
-                <LogOut size={16} /> Tutup Portal
+                <LogOut size={16} /> Log Keluar
               </button>
             </div>
           </div>
