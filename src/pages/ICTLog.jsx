@@ -38,7 +38,6 @@ const ICTLog = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // STATE UNTUK FILTER
   const [filterLab, setFilterLab] = useState('Semua Makmal');
   const [filterYear, setFilterYear] = useState('Semua Tahun');
   const [filterMonth, setFilterMonth] = useState('Semua Bulan');
@@ -59,14 +58,12 @@ const ICTLog = ({ onBack }) => {
     document.getElementById('pdf-masa-rekod').innerText = masaRekod;
 
     try {
-      // 1. Simpan ke Firebase
       await addDoc(collection(db, 'ict_usage_logs'), {
         ...formData,
         tarikhFormatted: tarikhFormatted,
         timestamp: serverTimestamp()
       });
 
-      // 2. Jana PDF Resit Pelajar
       const element = pdfRef.current;
       const canvas = await html2canvas(element, { scale: 1.2, logging: false, useCORS: true });
       const imgData = canvas.toDataURL('image/jpeg', 0.8);
@@ -82,7 +79,6 @@ const ICTLog = ({ onBack }) => {
       const fileName = `Log_${safeLokasi}${serverPart}_${formData.nopc}_${safeName}.pdf`;
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
 
-      // 3. Hantar Resit ke Google Drive
       const scriptURL = 'https://script.google.com/macros/s/AKfycby_rBOx4PAO8gAN1Hzzx2XKSBD2iDinACJ4Q_15pHtt9zL3MsPq7DeScvRka-tL6rWi7w/exec';
       fetch(scriptURL, {
         method: 'POST',
@@ -149,7 +145,6 @@ const ICTLog = ({ onBack }) => {
     return matchesLab && matchesSearch && matchesYear && matchesMonth;
   });
 
-  // Fungsi selamat untuk tukar logo ke Base64 (Elak logo hilang)
   const getBase64Image = (imgSrc) => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -175,17 +170,14 @@ const ICTLog = ({ onBack }) => {
       const pdf = new jsPDF('l', 'mm', 'a4'); 
       const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      // Dapatkan Logo sebelum render jadual
       const logoObj = await getBase64Image(logo);
 
-      // Sedia Tajuk Tapisan (Filter Subtitle)
       let reportSubtitle = "Semua Rekod";
       if (filterLab !== 'Semua Makmal' || filterYear !== 'Semua Tahun' || filterMonth !== 'Semua Bulan') {
          const monthName = filterMonth === 'Semua Bulan' ? 'Semua' : new Date(`2000-${filterMonth}-01`).toLocaleString('ms-MY', { month: 'long' });
          reportSubtitle = `Makmal: ${filterLab !== 'Semua Makmal' ? filterLab : 'Semua'}  |  Tahun: ${filterYear !== 'Semua Tahun' ? filterYear : 'Semua'}  |  Bulan: ${monthName}`;
       }
 
-      // Sedia Data Jadual
       const tableColumn = ["No.", "Nama Pelajar", "Matrik", "Sem", "Lokasi", "No. PC / Server", "Tarikh & Masa", "Tujuan"];
       const tableRows = [];
 
@@ -202,33 +194,34 @@ const ICTLog = ({ onBack }) => {
         ]);
       });
 
-      // Proses cetak ke PDF dengan saiz lajur tetap supaya tak terpotong
+      // ==============================================================
+      // ⚠️ TETAPAN BARU: Lebar lajur & padding diubah supaya teks KEKAL UTUH
+      // ==============================================================
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
         startY: 58, 
-        margin: { top: 58, left: 10, right: 10, bottom: 15 }, // Wajibkan margin konsisten di semua page
+        margin: { top: 58, left: 10, right: 10, bottom: 15 },
         theme: 'grid',
         styles: { 
           fontSize: 8, 
-          cellPadding: 3, 
+          cellPadding: 2, // Kurangkan padding supaya ruang huruf lebih luas
           textColor: [15, 23, 42], 
           valign: 'middle',
           overflow: 'linebreak' 
         },
         headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], halign: 'center' },
         columnStyles: {
-          0: { halign: 'center', cellWidth: 10 },
-          1: { cellWidth: 50 }, // Besarkan lajur nama
+          0: { halign: 'center', cellWidth: 12 }, // Besarkan sedikit untuk elak '10' terpenggal
+          1: { cellWidth: 55 }, // Ruang nama
           2: { halign: 'center', cellWidth: 20 },
-          3: { halign: 'center', cellWidth: 18 },
-          4: { cellWidth: 32 },
-          5: { cellWidth: 32 },
-          6: { cellWidth: 25 },
-          7: { cellWidth: 'auto' } // Tujuan ambil baki ruang dengan kemas
+          3: { halign: 'center', cellWidth: 20 }, // Besarkan supaya 'Semester 1' muat satu baris
+          4: { cellWidth: 35 }, // Ruang lokasi
+          5: { cellWidth: 35 }, // Ruang PC/Server
+          6: { cellWidth: 28 }, // Ruang Tarikh
+          7: { cellWidth: 'auto' } // Baki kertas diberikan kepada Tujuan
         },
         didDrawPage: function (data) {
-          // LUKIS PADA SETIAP KERTAS (Logo & Tajuk)
           if (logoObj) {
             const logoW = 35;
             const logoH = (logoObj.height * logoW) / logoObj.width;
@@ -249,7 +242,6 @@ const ICTLog = ({ onBack }) => {
           pdf.setTextColor(100, 116, 139);
           pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pdfWidth / 2, 51, { align: 'center' });
 
-          // FOOTER: Nombor Muka Surat
           pdf.setFontSize(8);
           pdf.setTextColor(150);
           pdf.text(`Muka Surat ${data.pageNumber}`, data.settings.margin.left, pdf.internal.pageSize.getHeight() - 8);
