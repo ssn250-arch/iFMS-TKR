@@ -149,14 +149,19 @@ const ICTLog = ({ onBack }) => {
     return matchesLab && matchesSearch && matchesYear && matchesMonth;
   });
 
-  const downloadAdminReport = async () => {
+const downloadAdminReport = async () => {
     if (filteredLogs.length === 0) return alert("Tiada rekod untuk dimuat turun.");
     setIsDownloading(true);
     
     try {
       const pdf = new jsPDF('l', 'mm', 'a4'); 
+      const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      // Lukis Logo
+      // 1. Sediakan Data Logo (Hanya sediakan sekali sebelum loop)
+      let logoData = null;
+      let logoW = 35;
+      let logoH = 0;
+      
       const logoElement = document.querySelector("img[alt='Logo ADTEC']");
       if (logoElement) {
           const canvas = document.createElement('canvas');
@@ -164,37 +169,18 @@ const ICTLog = ({ onBack }) => {
           canvas.height = logoElement.naturalHeight || 200;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(logoElement, 0, 0, canvas.width, canvas.height);
-          const logoData = canvas.toDataURL('image/png');
-          
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const logoW = 35;
-          const logoH = (canvas.height * logoW) / canvas.width;
-          pdf.addImage(logoData, 'PNG', (pdfWidth - logoW) / 2, 10, logoW, logoH);
+          logoData = canvas.toDataURL('image/png');
+          logoH = (canvas.height * logoW) / canvas.width;
       }
 
-      // Teks Tajuk
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT", pageWidth / 2, 35, { align: 'center' });
-
+      // 2. Sediakan Subtajuk (Maklumat Filter)
       let reportSubtitle = "Semua Rekod";
       if (filterLab !== 'Semua Makmal' || filterYear !== 'Semua Tahun' || filterMonth !== 'Semua Bulan') {
          const monthName = filterMonth === 'Semua Bulan' ? 'Semua' : new Date(`2000-${filterMonth}-01`).toLocaleString('ms-MY', { month: 'long' });
          reportSubtitle = `Makmal: ${filterLab !== 'Semua Makmal' ? filterLab : 'Semua'}  |  Tahun: ${filterYear !== 'Semua Tahun' ? filterYear : 'Semua'}  |  Bulan: ${monthName}`;
       }
 
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(15, 23, 42); 
-      pdf.text(`[ ${reportSubtitle} ]`, pageWidth / 2, 42, { align: 'center' });
-
-      pdf.setFontSize(8);
-      pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pageWidth / 2, 48, { align: 'center' });
-
-      // Sedia Data Jadual
+      // 3. Sediakan Data Jadual
       const tableColumn = ["No.", "Nama Pelajar", "Matrik", "Sem", "Lokasi", "No. PC / Server", "Tarikh & Masa", "Tujuan"];
       const tableRows = [];
 
@@ -211,11 +197,12 @@ const ICTLog = ({ onBack }) => {
         ]);
       });
 
-      // Lukis Jadual
+      // 4. Lukis Jadual & Pengepala (Header) Berulang
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
         startY: 55, 
+        margin: { top: 55 }, // PENTING: Wajibkan ruang atas 55mm kosong pada setiap kertas baru
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 4, textColor: [15, 23, 42], valign: 'middle' },
         headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], halign: 'center' },
@@ -226,14 +213,38 @@ const ICTLog = ({ onBack }) => {
           5: { cellWidth: 28 },
           6: { cellWidth: 28 }
         },
+        // Fungsi ni akan 'ditembak' setiap kali muka surat baru dibuat
         didDrawPage: function (data) {
+          // A. LUKIS LOGO
+          if (logoData) {
+            pdf.addImage(logoData, 'PNG', (pdfWidth - logoW) / 2, 10, logoW, logoH);
+          }
+
+          // B. LUKIS TAJUK
+          pdf.setFontSize(14);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(15, 23, 42); 
+          pdf.text("LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT", pdfWidth / 2, 35, { align: 'center' });
+
+          // C. LUKIS MAKLUMAT FILTER
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "bold");
+          pdf.text(`[ ${reportSubtitle} ]`, pdfWidth / 2, 42, { align: 'center' });
+
+          // D. LUKIS TARIKH JANAAN
+          pdf.setFontSize(8);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(100, 116, 139);
+          pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pdfWidth / 2, 48, { align: 'center' });
+
+          // E. LUKIS MUKA SURAT DI BAWAH KERTAS
           pdf.setFontSize(8);
           pdf.setTextColor(150);
           pdf.text(`Muka Surat ${data.pageNumber}`, data.settings.margin.left, pdf.internal.pageSize.getHeight() - 10);
         }
       });
 
-      pdf.save(`Laporan_Log_ICT_${filterLab}_${filterMonth}-${filterYear}.pdf`.replace(/Semua Makmal_|Semua Bulan-|Semua Tahun/g, 'Keseluruhan'));
+      pdf.save(`Laporan_Log_ICT_${filterLab}_${filterMonth}-${filterYear}.pdf`.replace(/Semua Makmal_|Semua Bulan-|Semua Tahun/g, 'Keseluruhan_'));
 
     } catch (error) {
       console.error("Gagal menjana PDF:", error);
