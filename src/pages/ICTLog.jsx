@@ -149,7 +149,25 @@ const ICTLog = ({ onBack }) => {
     return matchesLab && matchesSearch && matchesYear && matchesMonth;
   });
 
-const downloadAdminReport = async () => {
+  // Fungsi selamat untuk tukar logo ke Base64 (Elak logo hilang)
+  const getBase64Image = (imgSrc) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = imgSrc;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height });
+      };
+      img.onerror = () => resolve(null);
+    });
+  };
+
+  const downloadAdminReport = async () => {
     if (filteredLogs.length === 0) return alert("Tiada rekod untuk dimuat turun.");
     setIsDownloading(true);
     
@@ -157,30 +175,17 @@ const downloadAdminReport = async () => {
       const pdf = new jsPDF('l', 'mm', 'a4'); 
       const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      // 1. Sediakan Data Logo (Hanya sediakan sekali sebelum loop)
-      let logoData = null;
-      let logoW = 35;
-      let logoH = 0;
-      
-      const logoElement = document.querySelector("img[alt='Logo ADTEC']");
-      if (logoElement) {
-          const canvas = document.createElement('canvas');
-          canvas.width = logoElement.naturalWidth || 500;
-          canvas.height = logoElement.naturalHeight || 200;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(logoElement, 0, 0, canvas.width, canvas.height);
-          logoData = canvas.toDataURL('image/png');
-          logoH = (canvas.height * logoW) / canvas.width;
-      }
+      // Dapatkan Logo sebelum render jadual
+      const logoObj = await getBase64Image(logo);
 
-      // 2. Sediakan Subtajuk (Maklumat Filter)
+      // Sedia Tajuk Tapisan (Filter Subtitle)
       let reportSubtitle = "Semua Rekod";
       if (filterLab !== 'Semua Makmal' || filterYear !== 'Semua Tahun' || filterMonth !== 'Semua Bulan') {
          const monthName = filterMonth === 'Semua Bulan' ? 'Semua' : new Date(`2000-${filterMonth}-01`).toLocaleString('ms-MY', { month: 'long' });
          reportSubtitle = `Makmal: ${filterLab !== 'Semua Makmal' ? filterLab : 'Semua'}  |  Tahun: ${filterYear !== 'Semua Tahun' ? filterYear : 'Semua'}  |  Bulan: ${monthName}`;
       }
 
-      // 3. Sediakan Data Jadual
+      // Sedia Data Jadual
       const tableColumn = ["No.", "Nama Pelajar", "Matrik", "Sem", "Lokasi", "No. PC / Server", "Tarikh & Masa", "Tujuan"];
       const tableRows = [];
 
@@ -197,50 +202,57 @@ const downloadAdminReport = async () => {
         ]);
       });
 
-      // 4. Lukis Jadual & Pengepala (Header) Berulang
+      // Proses cetak ke PDF dengan saiz lajur tetap supaya tak terpotong
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
-        startY: 55, 
-        margin: { top: 55 }, // PENTING: Wajibkan ruang atas 55mm kosong pada setiap kertas baru
+        startY: 58, 
+        margin: { top: 58, left: 10, right: 10, bottom: 15 }, // Wajibkan margin konsisten di semua page
         theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 4, textColor: [15, 23, 42], valign: 'middle' },
+        styles: { 
+          fontSize: 8, 
+          cellPadding: 3, 
+          textColor: [15, 23, 42], 
+          valign: 'middle',
+          overflow: 'linebreak' 
+        },
         headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], halign: 'center' },
         columnStyles: {
           0: { halign: 'center', cellWidth: 10 },
+          1: { cellWidth: 50 }, // Besarkan lajur nama
           2: { halign: 'center', cellWidth: 20 },
-          3: { halign: 'center', cellWidth: 16 },
-          5: { cellWidth: 28 },
-          6: { cellWidth: 28 }
+          3: { halign: 'center', cellWidth: 18 },
+          4: { cellWidth: 32 },
+          5: { cellWidth: 32 },
+          6: { cellWidth: 25 },
+          7: { cellWidth: 'auto' } // Tujuan ambil baki ruang dengan kemas
         },
-        // Fungsi ni akan 'ditembak' setiap kali muka surat baru dibuat
         didDrawPage: function (data) {
-          // A. LUKIS LOGO
-          if (logoData) {
-            pdf.addImage(logoData, 'PNG', (pdfWidth - logoW) / 2, 10, logoW, logoH);
+          // LUKIS PADA SETIAP KERTAS (Logo & Tajuk)
+          if (logoObj) {
+            const logoW = 35;
+            const logoH = (logoObj.height * logoW) / logoObj.width;
+            pdf.addImage(logoObj.dataUrl, 'PNG', (pdfWidth - logoW) / 2, 10, logoW, logoH);
           }
 
-          // B. LUKIS TAJUK
           pdf.setFontSize(14);
           pdf.setFont("helvetica", "bold");
           pdf.setTextColor(15, 23, 42); 
-          pdf.text("LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT", pdfWidth / 2, 35, { align: 'center' });
+          pdf.text("LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT", pdfWidth / 2, 38, { align: 'center' });
 
-          // C. LUKIS MAKLUMAT FILTER
           pdf.setFontSize(10);
           pdf.setFont("helvetica", "bold");
-          pdf.text(`[ ${reportSubtitle} ]`, pdfWidth / 2, 42, { align: 'center' });
+          pdf.text(`[ ${reportSubtitle} ]`, pdfWidth / 2, 45, { align: 'center' });
 
-          // D. LUKIS TARIKH JANAAN
           pdf.setFontSize(8);
           pdf.setFont("helvetica", "normal");
           pdf.setTextColor(100, 116, 139);
-          pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pdfWidth / 2, 48, { align: 'center' });
+          pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pdfWidth / 2, 51, { align: 'center' });
 
-          // E. LUKIS MUKA SURAT DI BAWAH KERTAS
+          // FOOTER: Nombor Muka Surat
           pdf.setFontSize(8);
           pdf.setTextColor(150);
-          pdf.text(`Muka Surat ${data.pageNumber}`, data.settings.margin.left, pdf.internal.pageSize.getHeight() - 10);
+          pdf.text(`Muka Surat ${data.pageNumber}`, data.settings.margin.left, pdf.internal.pageSize.getHeight() - 8);
         }
       });
 
@@ -539,7 +551,6 @@ const downloadAdminReport = async () => {
           <div style={{ marginTop: '50px', fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}><p style={{ margin: 0 }}>Dokumen ini dijana secara automatik oleh Sistem E-Log Makmal Komputer.</p></div>
         </div>
       </div>
-
     </main>
   );
 };
