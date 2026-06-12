@@ -12,12 +12,12 @@ import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } 
 // ⚠️ MASUKKAN CONFIG FIREBASE KAU DI SINI
 // ==========================================
 const firebaseConfig = {
-  apiKey: "LETAK_API_KEY_KAU_DI_SINI",
-  authDomain: "projek-kau.firebaseapp.com",
-  projectId: "projek-kau",
-  storageBucket: "projek-kau.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123:web:abc"
+  apiKey: "AIzaSyDxQbSs1KNzTcqGQ0qoaG8ul8Is3ITESCA",
+  authDomain: "servedesk-adtec.firebaseapp.com",
+  projectId: "servedesk-adtec",
+  storageBucket: "servedesk-adtec.firebasestorage.app",
+  messagingSenderId: "1047170959965",
+  appId: "1:1047170959965:web:d610c273dc130a44e75bb4"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -35,13 +35,11 @@ const ICTLog = ({ onBack }) => {
   const [loginInput, setLoginInput] = useState({ username: '', pass: '' });
   const [loginError, setLoginError] = useState('');
   const [logs, setLogs] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  // STATE UNTUK FILTER
   const [filterLab, setFilterLab] = useState('Semua Makmal');
-  const [filterYear, setFilterYear] = useState('Semua Tahun');
-  const [filterMonth, setFilterMonth] = useState('Semua Bulan');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const adminPdfRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -59,14 +57,12 @@ const ICTLog = ({ onBack }) => {
     document.getElementById('pdf-masa-rekod').innerText = masaRekod;
 
     try {
-      // 1. Simpan ke Firebase
       await addDoc(collection(db, 'ict_usage_logs'), {
         ...formData,
         tarikhFormatted: tarikhFormatted,
         timestamp: serverTimestamp()
       });
 
-      // 2. Jana PDF Resit Pelajar
       const element = pdfRef.current;
       const canvas = await html2canvas(element, { scale: 1.2, logging: false, useCORS: true });
       const imgData = canvas.toDataURL('image/jpeg', 0.8);
@@ -82,8 +78,8 @@ const ICTLog = ({ onBack }) => {
       const fileName = `Log_${safeLokasi}${serverPart}_${formData.nopc}_${safeName}.pdf`;
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
 
-      // 3. Hantar Resit ke Google Drive
       const scriptURL = 'https://script.google.com/macros/s/AKfycby_rBOx4PAO8gAN1Hzzx2XKSBD2iDinACJ4Q_15pHtt9zL3MsPq7DeScvRka-tL6rWi7w/exec';
+      
       fetch(scriptURL, {
         method: 'POST',
         body: JSON.stringify({ fileName: fileName, fileData: pdfBase64, lokasi: formData.lokasi }),
@@ -92,6 +88,7 @@ const ICTLog = ({ onBack }) => {
       }).catch(err => console.error("Ralat background upload:", err));
 
       setShowSuccess(true);
+      
       setTimeout(() => {
         setFormData({ nama: '', matrik: '', semester: '', lokasi: '', noserver: '', nopc: '', tarikh: '', masaGuna: '', tujuan: '' });
         setIsSubmitting(false);
@@ -129,24 +126,12 @@ const ICTLog = ({ onBack }) => {
     }
   }, [viewMode]);
 
-  const uniqueYears = [...new Set(logs.map(log => log.tarikh?.substring(0, 4)).filter(Boolean))].sort((a, b) => b - a);
-
   const filteredLogs = logs.filter(log => {
     const matchesLab = filterLab === 'Semua Makmal' || log.lokasi === filterLab;
     const matchesSearch = log.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           log.matrik?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           log.nopc?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    let matchesYear = true;
-    let matchesMonth = true;
-
-    if (log.tarikh) {
-      const [logYear, logMonth] = log.tarikh.split('-');
-      matchesYear = filterYear === 'Semua Tahun' || logYear === filterYear;
-      matchesMonth = filterMonth === 'Semua Bulan' || logMonth === filterMonth;
-    }
-
-    return matchesLab && matchesSearch && matchesYear && matchesMonth;
+    return matchesLab && matchesSearch;
   });
 
   const downloadAdminReport = async () => {
@@ -154,9 +139,10 @@ const ICTLog = ({ onBack }) => {
     setIsDownloading(true);
     
     try {
+      // 1. Format Kertas: 'l' (Landscape), 'mm' (Milimeter), 'a4' (Saiz)
       const pdf = new jsPDF('l', 'mm', 'a4'); 
 
-      // Lukis Logo
+      // 2. Lukis Logo ADTEC (Ambil dari UI supaya tajam)
       const logoElement = document.querySelector("img[alt='Logo ADTEC']");
       if (logoElement) {
           const canvas = document.createElement('canvas');
@@ -167,34 +153,23 @@ const ICTLog = ({ onBack }) => {
           const logoData = canvas.toDataURL('image/png');
           
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          const logoW = 35;
-          const logoH = (canvas.height * logoW) / canvas.width;
+          const logoW = 35; // Lebar logo di PDF
+          const logoH = (canvas.height * logoW) / canvas.width; // Nisbah tinggi automatik
           pdf.addImage(logoData, 'PNG', (pdfWidth - logoW) / 2, 10, logoW, logoH);
       }
 
-      // Teks Tajuk
+      // 3. Susun Tajuk Utama Laporan
       const pageWidth = pdf.internal.pageSize.getWidth();
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
       pdf.text("LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT", pageWidth / 2, 35, { align: 'center' });
 
-      let reportSubtitle = "Semua Rekod";
-      if (filterLab !== 'Semua Makmal' || filterYear !== 'Semua Tahun' || filterMonth !== 'Semua Bulan') {
-         const monthName = filterMonth === 'Semua Bulan' ? 'Semua' : new Date(`2000-${filterMonth}-01`).toLocaleString('ms-MY', { month: 'long' });
-         reportSubtitle = `Makmal: ${filterLab !== 'Semua Makmal' ? filterLab : 'Semua'}  |  Tahun: ${filterYear !== 'Semua Tahun' ? filterYear : 'Semua'}  |  Bulan: ${monthName}`;
-      }
-
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(15, 23, 42); 
-      pdf.text(`[ ${reportSubtitle} ]`, pageWidth / 2, 42, { align: 'center' });
-
-      pdf.setFontSize(8);
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pageWidth / 2, 48, { align: 'center' });
+      pdf.setTextColor(71, 85, 105); // Warna Slate-600
+      pdf.text(`Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: ${new Date().toLocaleDateString('ms-MY')}`, pageWidth / 2, 42, { align: 'center' });
 
-      // Sedia Data Jadual
+      // 4. Proses Data untuk AutoTable
       const tableColumn = ["No.", "Nama Pelajar", "Matrik", "Sem", "Lokasi", "No. PC / Server", "Tarikh & Masa", "Tujuan"];
       const tableRows = [];
 
@@ -211,14 +186,23 @@ const ICTLog = ({ onBack }) => {
         ]);
       });
 
-      // Lukis Jadual
+      // 5. Lukis Jadual Gred Profesional
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
-        startY: 55, 
+        startY: 50, // Mula lukis jadual di bawah tajuk
         theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 4, textColor: [15, 23, 42], valign: 'middle' },
-        headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], halign: 'center' },
+        styles: { 
+          fontSize: 8, 
+          cellPadding: 4, 
+          textColor: [15, 23, 42], // Teks gelap
+          valign: 'middle' 
+        },
+        headStyles: { 
+          fillColor: [30, 41, 59], // Warna Slate-800
+          textColor: [255, 255, 255], 
+          halign: 'center' 
+        },
         columnStyles: {
           0: { halign: 'center', cellWidth: 10 },
           2: { halign: 'center', cellWidth: 20 },
@@ -227,13 +211,19 @@ const ICTLog = ({ onBack }) => {
           6: { cellWidth: 28 }
         },
         didDrawPage: function (data) {
+          // Tambah muka surat di setiap bahagian bawah kertas
           pdf.setFontSize(8);
           pdf.setTextColor(150);
-          pdf.text(`Muka Surat ${data.pageNumber}`, data.settings.margin.left, pdf.internal.pageSize.getHeight() - 10);
+          pdf.text(
+            `Muka Surat ${data.pageNumber}`,
+            data.settings.margin.left,
+            pdf.internal.pageSize.getHeight() - 10
+          );
         }
       });
 
-      pdf.save(`Laporan_Log_ICT_${filterLab}_${filterMonth}-${filterYear}.pdf`.replace(/Semua Makmal_|Semua Bulan-|Semua Tahun/g, 'Keseluruhan'));
+      // 6. Simpan Fail
+      pdf.save(`Laporan_Log_ICT_${new Date().toLocaleDateString('ms-MY').replace(/\//g, '-')}.pdf`);
 
     } catch (error) {
       console.error("Gagal menjana PDF:", error);
@@ -244,7 +234,7 @@ const ICTLog = ({ onBack }) => {
   };
 
   return (
-    <main className={`flex-grow flex justify-center p-4 sm:p-6 lg:p-8 fade-in relative w-full ${viewMode === 'adminDashboard' ? 'items-start' : 'items-center'}`}>
+    <main className="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8 fade-in relative w-full">
       
       {viewMode === 'form' && (
         <div className="glass-panel w-full max-w-2xl rounded-2xl p-6 sm:p-10 relative overflow-hidden shadow-lg border border-slate-200 bg-white">
@@ -404,52 +394,24 @@ const ICTLog = ({ onBack }) => {
               </button>
 
               <button onClick={() => setViewMode('form')} className="bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-red-100">
-                <LogOut size={16} /> Tutup Portal
+                <LogOut size={16} /> Log Keluar
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-              <input type="text" placeholder="Cari Pelajar / Matrik..." className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+            <div className="relative w-full md:flex-grow">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+              <input type="text" placeholder="Cari Nama Pelajar, Matrik, atau No. PC..." className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
-            
-            <div className="relative w-full">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-              <select value={filterLab} onChange={(e) => setFilterLab(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-8 py-3 text-sm font-bold shadow-sm outline-none appearance-none cursor-pointer">
-                <option value="Semua Makmal">Semua Makmal</option>
+            <div className="relative w-full md:w-64 shrink-0">
+              <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+              <select value={filterLab} onChange={(e) => setFilterLab(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold shadow-sm outline-none appearance-none cursor-pointer">
+                <option>Semua Makmal</option>
                 <option value="Lab Aplikasi">Lab Aplikasi</option>
                 <option value="Lab Server">Lab Server</option>
                 <option value="Lab Troubleshooting">Lab Troubleshooting</option>
                 <option value="Lab Maintenance">Lab Maintenance</option>
-              </select>
-            </div>
-
-            <div className="relative w-full">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-              <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-8 py-3 text-sm font-bold shadow-sm outline-none appearance-none cursor-pointer">
-                <option value="Semua Tahun">Semua Tahun</option>
-                {uniqueYears.map(year => <option key={year} value={year}>{year}</option>)}
-              </select>
-            </div>
-
-            <div className="relative w-full">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-              <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-8 py-3 text-sm font-bold shadow-sm outline-none appearance-none cursor-pointer">
-                <option value="Semua Bulan">Semua Bulan</option>
-                <option value="01">Januari</option>
-                <option value="02">Februari</option>
-                <option value="03">Mac</option>
-                <option value="04">April</option>
-                <option value="05">Mei</option>
-                <option value="06">Jun</option>
-                <option value="07">Julai</option>
-                <option value="08">Ogos</option>
-                <option value="09">September</option>
-                <option value="10">Oktober</option>
-                <option value="11">November</option>
-                <option value="12">Disember</option>
               </select>
             </div>
           </div>
@@ -529,6 +491,50 @@ const ICTLog = ({ onBack }) => {
         </div>
       </div>
 
+      {/* ==========================================
+          TEMPLATE PDF TERSEMBUNYI UNTUK ADMIN (TABLE)
+          ========================================== */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div ref={adminPdfRef} style={{ width: '1123px', padding: '40px', backgroundColor: '#ffffff', color: '#000000', fontFamily: 'Arial, sans-serif' }}>
+           <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '3px solid #1e293b', paddingBottom: '15px' }}>
+               
+               {/* LOGO DITAMBAH DI SINI (ALIGN CENTER) */}
+               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '15px' }}>
+                   <img src={logo} alt="Logo ADTEC" style={{ height: '85px', width: 'auto', objectFit: 'contain' }} />
+               </div>
+               
+               <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', textTransform: 'uppercase' }}>LAPORAN KESELURUHAN LOG PENGGUNAAN MAKMAL ICT</h2>
+               <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>Sistem Pemantauan Fasiliti ADTEC Sandakan | Tarikh Janaan: {new Date().toLocaleDateString('ms-MY')}</p>
+           </div>
+           
+           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginTop: '20px' }}>
+              <thead>
+                 <tr style={{ backgroundColor: '#f1f5f9', color: '#1e293b', textAlign: 'left' }}>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '5%', textAlign: 'center' }}>No.</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '25%' }}>Nama Pelajar & Matrik</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '10%', textAlign: 'center' }}>Semester</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>Lokasi Makmal</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>No. PC / Server</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>Tarikh & Masa</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', width: '15%' }}>Tujuan</th>
+                 </tr>
+              </thead>
+              <tbody>
+                 {filteredLogs.map((log, index) => (
+                     <tr key={log.id}>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}><strong>{log.nama}</strong><br/><span style={{fontSize: '10px', color: '#64748b'}}>{log.matrik}</span></td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'center' }}>{log.semester}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.lokasi}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.nopc} {log.noserver && log.noserver !== 'Tiada' ? `(${log.noserver})` : ''}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.tarikhFormatted || log.tarikh}<br/><span style={{fontSize: '10px', color: '#64748b'}}>{log.masaGuna}</span></td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{log.tujuan}</td>
+                     </tr>
+                 ))}
+              </tbody>
+           </table>
+        </div>
+      </div>
     </main>
   );
 };
