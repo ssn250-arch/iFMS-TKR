@@ -5,10 +5,11 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ICTLog from './pages/ICTLog'; 
+import ServeDesk from './pages/ServeDesk'; // Komponen Baharu Diimport
 import ConstructionModal from './components/ConstructionModal';
 
 function App() {
-  // State untuk kawal paparan utama (Home atau Form)
+  // State untuk kawal paparan utama (home, form, atau aduan)
   const [currentView, setCurrentView] = useState('home');
   
   // State untuk kawal Modal (buka atau tutup)
@@ -20,7 +21,13 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Fungsi pintar untuk kembali ke Menu Utama (berserta auto-scroll ke atas)
+  // Fungsi untuk buka borang Aduan Kerosakan ICT
+  const handleOpenAduan = () => {
+    setCurrentView('aduan');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Fungsi pintar untuk kembali ke Menu Utama
   const handleBackHome = () => {
     setCurrentView('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -33,17 +40,19 @@ function App() {
       style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }}
     >
       
-      {/* 1. NAVBAR - Menerima state semasa dan fungsi kembali ke Home */}
+      {/* 1. NAVBAR */}
       <Navbar currentView={currentView} onBackHome={handleBackHome} />
 
       {/* 2. KAWAL PAPARAN (CONDITIONAL RENDERING) */}
       {currentView === 'home' ? (
         <Home 
           onOpenForm={handleOpenForm} 
-          onOpenModal={() => setIsModalOpen(true)}  
+          onOpenAduan={handleOpenAduan} // Pass fungsi baharu ke Home
         />
-      ) : (
+      ) : currentView === 'form' ? (
         <ICTLog onBack={handleBackHome} /> 
+      ) : (
+        <ServeDesk onBackHome={handleBackHome} /> // Paparkan ServeDesk
       )}
 
       {/* 3. FOOTER */}
