@@ -649,7 +649,6 @@ export default function ServeDesk({ onBackHome }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center overflow-x-auto gap-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             
-            {/* Butang Kembali Ke IFMS ditambahkan di sini */}
             <div className="flex items-center gap-3 text-left cursor-pointer shrink-0">
               <button 
                 onClick={onBackHome} 
@@ -1083,8 +1082,8 @@ export default function ServeDesk({ onBackHome }) {
 
       {/* MODAL: Aduan Baru - Disusun menegak (stacked) dan lebih profesional */}
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto pt-24 pb-12 text-left">
-          <div className={`bg-white rounded-[2rem] shadow-2xl max-w-6xl w-full relative overflow-hidden transform transition-all duration-500 border border-slate-100 ${isSubmitting ? 'scale-95 opacity-50' : 'scale-100'}`}>
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-start justify-center p-4 py-10 sm:py-16 z-50 overflow-y-auto text-left">
+          <div className={`bg-white rounded-[2rem] shadow-2xl max-w-5xl w-full relative overflow-hidden transform transition-all duration-500 border border-slate-100 ${isSubmitting ? 'scale-95 opacity-50' : 'scale-100'}`}>
             {showSuccessAnim && (
                 <div className="absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center animate-in fade-in">
                     <div className="bg-emerald-50 p-6 rounded-full animate-bounce border-[8px] border-emerald-100/50"><CheckCircle size={80} className="text-emerald-500" /></div>
