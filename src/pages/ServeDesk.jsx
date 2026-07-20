@@ -1084,7 +1084,7 @@ export default function ServeDesk({ onBackHome }) {
       {/* MODAL: Aduan Baru - Disusun menegak (stacked) dan lebih profesional */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto pt-24 pb-12 text-left">
-          <div className={`bg-white rounded-[2rem] shadow-2xl max-w-3xl w-full relative overflow-hidden transform transition-all duration-500 border border-slate-100 ${isSubmitting ? 'scale-95 opacity-50' : 'scale-100'}`}>
+          <div className={`bg-white rounded-[2rem] shadow-2xl max-w-6xl w-full relative overflow-hidden transform transition-all duration-500 border border-slate-100 ${isSubmitting ? 'scale-95 opacity-50' : 'scale-100'}`}>
             {showSuccessAnim && (
                 <div className="absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center animate-in fade-in">
                     <div className="bg-emerald-50 p-6 rounded-full animate-bounce border-[8px] border-emerald-100/50"><CheckCircle size={80} className="text-emerald-500" /></div>

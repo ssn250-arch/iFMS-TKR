@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ICTLog from './pages/ICTLog'; 
-import ServeDesk from './pages/ServeDesk'; // Komponen Baharu Diimport
+import ServeDesk from './pages/ServeDesk';
 import ConstructionModal from './components/ConstructionModal';
 
 function App() {
@@ -40,23 +40,27 @@ function App() {
       style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }}
     >
       
-      {/* 1. NAVBAR */}
-      <Navbar currentView={currentView} onBackHome={handleBackHome} />
+      {/* 1. NAVBAR - Hanya papar jika BUKAN di menu aduan */}
+      {currentView !== 'aduan' && (
+        <Navbar currentView={currentView} onBackHome={handleBackHome} />
+      )}
 
       {/* 2. KAWAL PAPARAN (CONDITIONAL RENDERING) */}
       {currentView === 'home' ? (
         <Home 
           onOpenForm={handleOpenForm} 
-          onOpenAduan={handleOpenAduan} // Pass fungsi baharu ke Home
+          onOpenAduan={handleOpenAduan} 
         />
       ) : currentView === 'form' ? (
         <ICTLog onBack={handleBackHome} /> 
       ) : (
-        <ServeDesk onBackHome={handleBackHome} /> // Paparkan ServeDesk
+        <ServeDesk onBackHome={handleBackHome} />
       )}
 
-      {/* 3. FOOTER */}
-      <Footer />
+      {/* 3. FOOTER - Hanya papar jika BUKAN di menu aduan */}
+      {currentView !== 'aduan' && (
+        <Footer />
+      )}
 
       {/* 4. MODAL DALAM PEMBINAAN */}
       {isModalOpen && (
