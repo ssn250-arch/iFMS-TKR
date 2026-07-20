@@ -46,9 +46,9 @@ import {
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxa6aBPzFBWf0TL9NfWlNQIi8PGFoh3aXWs6iMxG888qpzW5HTrPltTzzSysJ-IJDXs-w/exec"; 
 
-// Konfigurasi Firebase dari IFMS-TKR
+// Konfigurasi Firebase menggunakan Environment Variable (.env) untuk keselamatan GitHub
 const firebaseConfig = {
-  apiKey: "AIzaSyDxQbSs1KNzTcqGQ0qoaG8ul8Is3ITESCA",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "servedesk-adtec.firebaseapp.com",
   projectId: "servedesk-adtec",
   storageBucket: "servedesk-adtec.firebasestorage.app",
@@ -209,14 +209,13 @@ const PDFContent = ({ item, idPrefix }) => (
           </td>
           <td style={{ width: '50%', border: '1px solid #000', padding: '10px', verticalAlign: 'top' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>PENGESAHAN UNIT ICT:</div>
-            <div style={{ border: '1px solid #eee', padding: '6px', minHeight: '60px', marginBottom: '45px', fontStyle: 'italic', fontSize: '8px' }}>
+            <div style={{ border: '1px solid #eee', padding: '6px', minHeight: '60px', marginBottom: '35px', fontStyle: 'italic', fontSize: '8px' }}>
                Telah disemak dan disahkan kerosakan telah dibaiki mengikut spesifikasi.
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '130px', borderBottom: '1px solid #000', margin: '0 auto' }}></div>
-              <div style={{ fontSize: '8px', marginTop: '3px' }}>Tandatangan & Cop Rasmi</div>
-              <div style={{ fontSize: '8px', fontWeight: 'bold', marginTop: '2px' }}>({item.verifiedBy || '......................................'})</div>
-              <div style={{ fontSize: '7px', marginTop: '2px' }}>Tarikh: {formatDate(item.dateVerified)}</div>
+              <div style={{ fontSize: '9px', marginTop: '3px' }}>Disahkan Oleh:</div>
+              <div style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '2px', textTransform: 'uppercase', color: '#166534' }}>{item.verifiedBy || 'MENUNGGU PENGESAHAN'}</div>
+              <div style={{ fontSize: '8px', marginTop: '4px' }}>Tarikh: {formatDate(item.dateVerified)}</div>
             </div>
           </td>
         </tr>
@@ -552,39 +551,17 @@ export default function ServeDesk({ onBackHome }) {
     document.body.removeChild(link);
   };
 
-  const generatePDFFromPreview = (itemId) => {
-    const element = document.getElementById(`pdf-content-${itemId}`);
-    if (!element) return;
-
-    const safeName = (activePreviewItem?.applicantName || 'Borang').replace(/[^a-z0-9]/gi, '_');
-    const filename = `Borang_Aduan_ADTEC_${safeName}.pdf`;
-
-    const opt = { 
-      margin: 0, 
-      filename: filename, 
-      image: { type: 'jpeg', quality: 1.0 }, 
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        backgroundColor: '#ffffff',
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        windowWidth: 794
-      }, 
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: 'avoid' }
-    };
-
-    window.html2pdf().set(opt).from(element).save();
-  };
-
+  // ==========================================
+  // 🤖 FUNGSI KEMAS KINI AI (GEMINI)
+  // ==========================================
   const callGeminiAI = async (text, roleType) => {
     if (!text || text.trim() === '') return text;
-    const apiKey = ""; // Masukkan API Key di sini jika ada
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+    // API Key yang diberikan oleh pengguna
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    
+    // Model Gemini
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     let systemPrompt = "";
     if (roleType === 'pemohon') {
@@ -607,9 +584,13 @@ export default function ServeDesk({ onBackHome }) {
         const result = await response.json();
         if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
             return result.candidates[0].content.parts[0].text.trim();
+        } else {
+            console.error("AI Error Details:", result);
+            alert("Ralat AI: Sila semak Console untuk maklumat lanjut (Kemungkinan ralat API Key).");
         }
     } catch (error) {
-        console.error("AI Error:", error);
+        console.error("AI Fetch Error:", error);
+        alert("Gagal menyambung ke pelayan AI.");
     }
     return text; 
   };
