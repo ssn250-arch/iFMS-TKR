@@ -551,17 +551,16 @@ export default function ServeDesk({ onBackHome }) {
     document.body.removeChild(link);
   };
 
-  // ==========================================
+// ==========================================
   // 🤖 FUNGSI KEMAS KINI AI (GEMINI)
   // ==========================================
   const callGeminiAI = async (text, roleType) => {
     if (!text || text.trim() === '') return text;
 
-    // API Key yang diberikan oleh pengguna
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     
-    // Model Gemini
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // PERUBAHAN: Tukar nama model kepada 'gemini-1.5-flash-latest' untuk elak ralat 404
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     let systemPrompt = "";
     if (roleType === 'pemohon') {
@@ -582,15 +581,18 @@ export default function ServeDesk({ onBackHome }) {
             body: JSON.stringify(payload)
         });
         const result = await response.json();
-        if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+        
+        // PERUBAHAN: Tangkap ralat spesifik dari Google untuk mudahkan troubleshoot
+        if (response.ok && result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
             return result.candidates[0].content.parts[0].text.trim();
         } else {
             console.error("AI Error Details:", result);
-            alert("Ralat AI: Sila semak Console untuk maklumat lanjut (Kemungkinan ralat API Key).");
+            const errorMsg = result.error?.message || "Ralat tidak diketahui";
+            alert(`Ralat Google AI:\n${errorMsg}\n\nPastikan API Key anda betul.`);
         }
     } catch (error) {
         console.error("AI Fetch Error:", error);
-        alert("Gagal menyambung ke pelayan AI.");
+        alert("Gagal menyambung ke pelayan AI Google. Sila semak sambungan internet anda.");
     }
     return text; 
   };
