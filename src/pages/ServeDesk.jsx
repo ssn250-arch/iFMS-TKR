@@ -560,7 +560,7 @@ export default function ServeDesk({ onBackHome }) {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     
     // PERUBAHAN: Tukar nama model kepada 'gemini-1.5-flash-latest' untuk elak ralat 404
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     let systemPrompt = "";
     if (roleType === 'pemohon') {
