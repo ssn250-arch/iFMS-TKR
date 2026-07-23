@@ -3,32 +3,36 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/iFMS-TKR/', // Wajib ada untuk GitHub Pages
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['logo.png'], // Pastikan logo.png ada dalam folder public
+      registerType: 'autoUpdate', // Inilah fungsi ajaib untuk Auto-Sync kod baru!
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'] // Fail yang akan di-cache
+      },
+      includeAssets: ['logo.png', 'icons.svg'], // Guna logo dari folder public bro
       manifest: {
-        name: 'Sistem iFMS-TKR ADTEC Sandakan',
-        short_name: 'iFMS-TKR',
-        description: 'Pusat sehenti pengurusan fasiliti dan peralatan ICT',
+        name: 'ServeDesk+ ADTEC',
+        short_name: 'ServeDesk',
+        description: 'Sistem Pengurusan Fasiliti & Aduan ICT',
         theme_color: '#ffffff',
-        background_color: '#f8fafc',
-        display: 'standalone', // Ini yang buat dia buang URL bar bila di-install
+        background_color: '#ffffff',
+        display: 'standalone',
         icons: [
           {
-            src: 'logo.png', // Guna logo kau sebagai icon app
+            src: 'logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
             src: 'logo.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
     })
-  ],
-  base: '/iFMS-TKR/', 
+  ]
 })
