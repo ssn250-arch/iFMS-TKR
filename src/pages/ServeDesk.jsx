@@ -41,7 +41,9 @@ import {
   Filter,
   Search,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  ImagePlus,
+  Trash2
 } from 'lucide-react';
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxa6aBPzFBWf0TL9NfWlNQIi8PGFoh3aXWs6iMxG888qpzW5HTrPltTzzSysJ-IJDXs-w/exec"; 
@@ -67,14 +69,24 @@ const INSTRUCTORS = [
   "Ts. Nurzharfan bin Rafei Bui",
   "Ts. Syed Mohd Yusri bin Syed Yusoff",
   "Ts. Muhammad Hifzan bin Salimun"
+  "Encik Nazri bin Yusof"
 ];
 
 const LABS = [
-  "Lab Aplikasi",
-  "Lab Troubleshooting",
-  "Lab Maintenance",
-  "Bengkel Komputer",
-  "Bilik Server"
+  "Lab Aplikasi-TKR",
+  "Lab Troubleshooting-TKR",
+  "Lab Maintenance-TKR",
+  "Lab Server-TKR",
+  "BPPA" ,
+  "BPSM" ,
+  "BPPL" ,
+  "CESS" ,
+  "TELCOM" ,
+  "TE" ,
+  "TPPU " ,
+  "TKIM" ,
+  "TFLSOG" ,
+  "TAUTO"
 ];
 
 const CATEGORIES = [
@@ -192,7 +204,7 @@ const PDFContent = ({ item, idPrefix }) => (
     </div>
 
     <div style={{ fontWeight: 'bold', fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase' }}>3. LAPORAN PENYELENGGARAAN & PENGESAHAN</div>
-    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: '9px' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: '9px', marginBottom: '15px' }}>
       <tbody>
         <tr>
           <td style={{ width: '50%', border: '1px solid #000', padding: '10px', verticalAlign: 'top' }}>
@@ -222,7 +234,21 @@ const PDFContent = ({ item, idPrefix }) => (
       </tbody>
     </table>
 
-    <div style={{ marginTop: '25px', border: '1px solid #000', padding: '6px', textAlign: 'center', fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase' }}>
+    {/* RUANGAN BUKTI GAMBAR JIKA ADA */}
+    {item.proofImages && item.proofImages.length > 0 && (
+      <div style={{ pageBreakInside: 'avoid', border: '1px solid #ccc', padding: '10px', backgroundColor: '#fafafa' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '10px', marginBottom: '8px', textTransform: 'uppercase' }}>LAMPIRAN BUKTI TINDAKAN</div>
+        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+          {item.proofImages.map((src, index) => (
+            <div key={index} style={{ border: '1px solid #ddd', padding: '3px', backgroundColor: '#fff' }}>
+                <img src={src} alt={`Bukti ${index + 1}`} style={{ height: '120px', width: 'auto', maxWidth: '160px', objectFit: 'cover' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div style={{ position: 'absolute', bottom: '25mm', left: '18mm', right: '18mm', border: '1px solid #000', padding: '6px', textAlign: 'center', fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase' }}>
       BORANG INI ADALAH CETAKAN DIGITAL SERVEDESK+ - TIDAK MEMERLUKAN TANDATANGAN PENGADU
     </div>
 
@@ -262,8 +288,8 @@ export default function ServeDesk({ onBackHome }) {
     text: '', techName: '', techCategory: '', techItem: ''
   });
 
+  const [proofImages, setProofImages] = useState([]);
   const [verifyName, setVerifyName] = useState('');
-
   const [isGeneratingIssue, setIsGeneratingIssue] = useState(false);
   const [isGeneratingAction, setIsGeneratingAction] = useState(false);
 
@@ -381,6 +407,7 @@ export default function ServeDesk({ onBackHome }) {
         techItem: '', 
         verifiedBy: '', 
         dateVerified: null,
+        proofImages: [],
         dateCreated: serverTimestamp(), 
         dateUpdated: serverTimestamp()
       });
@@ -397,15 +424,60 @@ export default function ServeDesk({ onBackHome }) {
     }
   };
 
+  // FUNGSI MUAT NAIK & KECILKAN GAMBAR SEBELUM SIMPAN KE FIREBASE
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const remainingSlots = 3 - proofImages.length;
+    
+    if (files.length > remainingSlots) {
+        alert(`Anda hanya boleh menambah ${remainingSlots} keping gambar lagi.`);
+    }
+
+    const filesToProcess = files.slice(0, remainingSlots);
+
+    filesToProcess.forEach(file => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600; // Saiz maksimum supaya Firebase tak berat
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Mampatkan gambar kepada format JPEG kualiti 60%
+                const base64Compressed = canvas.toDataURL('image/jpeg', 0.6); 
+                setProofImages(prev => [...prev, base64Compressed]);
+            };
+        };
+    });
+  };
+
   const handleUpdateAction = async () => {
     if (!actionData.text || !actionData.techName || !actionData.techCategory || !activeTechModal) return;
     setIsSubmitting(true);
     try {
       const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'complaints', activeTechModal);
       await updateDoc(docRef, {
-        technicalAction: actionData.text, technicianName: actionData.techName,
-        techCategory: actionData.techCategory, techItem: actionData.techItem,
-        status: 'Penyelenggaraan', dateUpdated: serverTimestamp()
+        technicalAction: actionData.text, 
+        technicianName: actionData.techName,
+        techCategory: actionData.techCategory, 
+        techItem: actionData.techItem,
+        proofImages: proofImages, // Simpan gambar ke database
+        status: 'Penyelenggaraan', 
+        dateUpdated: serverTimestamp()
       });
       setShowSuccessAnim(true);
       setTimeout(() => {
@@ -413,6 +485,7 @@ export default function ServeDesk({ onBackHome }) {
         setShowSuccessAnim(false);
         setActiveTechModal(null);
         setActionData({ text: '', techName: '', techCategory: '', techItem: '' });
+        setProofImages([]);
       }, 2000);
     } catch (err) {
       console.error(err);
@@ -551,7 +624,7 @@ export default function ServeDesk({ onBackHome }) {
     document.body.removeChild(link);
   };
 
-// ==========================================
+  // ==========================================
   // 🤖 FUNGSI KEMAS KINI AI (GEMINI)
   // ==========================================
   const callGeminiAI = async (text, roleType) => {
@@ -559,7 +632,7 @@ export default function ServeDesk({ onBackHome }) {
 
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     
-    // PERUBAHAN: Tukar nama model kepada 'gemini-1.5-flash-latest' untuk elak ralat 404
+    // Nama model telah diperbetulkan
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     let systemPrompt = "";
@@ -582,7 +655,6 @@ export default function ServeDesk({ onBackHome }) {
         });
         const result = await response.json();
         
-        // PERUBAHAN: Tangkap ralat spesifik dari Google untuk mudahkan troubleshoot
         if (response.ok && result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
             return result.candidates[0].content.parts[0].text.trim();
         } else {
@@ -1031,7 +1103,16 @@ export default function ServeDesk({ onBackHome }) {
                         <div className="space-y-2 mt-auto">
                           <div className="flex gap-2">
                             {role === 'juruteknik' && item.status !== 'Selesai' && item.status !== 'Ditolak' && isInstAuthenticated && (
-                              <button onClick={() => { setActiveTechModal(item.id); setActionData({ text: item.technicalAction || '', techName: item.technicianName || '', techCategory: item.techCategory || '', techItem: item.techItem || '' }); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all border border-indigo-700">Update Log</button>
+                              <button 
+                                onClick={() => { 
+                                  setActiveTechModal(item.id); 
+                                  setActionData({ text: item.technicalAction || '', techName: item.technicianName || '', techCategory: item.techCategory || '', techItem: item.techItem || '' }); 
+                                  setProofImages(item.proofImages || []);
+                                }} 
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all border border-indigo-700"
+                              >
+                                Update Log
+                              </button>
                             )}
                             
                             {role === 'pengajar' && item.status === 'Penyelenggaraan' && isInstAuthenticated && (
@@ -1167,18 +1248,20 @@ export default function ServeDesk({ onBackHome }) {
       {/* MODAL: Update Log Juruteknik */}
       {activeTechModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto text-left">
-          <div className={`bg-white rounded-[3rem] shadow-2xl max-md w-full relative overflow-hidden transform transition-all ${isSubmitting ? 'scale-95' : 'scale-100'}`}>
+          <div className={`bg-white rounded-[3rem] shadow-2xl max-w-md w-full relative overflow-hidden transform transition-all ${isSubmitting ? 'scale-95' : 'scale-100'}`}>
             {showSuccessAnim && (
                 <div className="absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center animate-in fade-in">
                     <div className="bg-indigo-100 p-6 rounded-full animate-pulse border-[10px] border-indigo-50"><Wrench size={60} className="text-indigo-600" /></div>
                     <h2 className="text-2xl font-black text-slate-800 mt-8 uppercase tracking-tighter">Log Diperbaharui</h2>
                 </div>
             )}
-            <button disabled={isSubmitting} onClick={() => setActiveTechModal(null)} className="absolute top-8 right-10 text-slate-400 hover:text-slate-600 transition-all z-10"><X size={24} /></button>
+            <button disabled={isSubmitting} onClick={() => { setActiveTechModal(null); setProofImages([]); }} className="absolute top-8 right-10 text-slate-400 hover:text-slate-600 transition-all z-10"><X size={24} /></button>
+            
             <div className="flex items-center gap-4 p-10 pb-0">
                 <div className="bg-indigo-50 text-indigo-600 p-4 rounded-2xl border border-indigo-100"><Wrench size={24} /></div>
                 <div><h2 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none">Update Tindakan</h2><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1.5">Log Penyelenggaraan ICT</p></div>
             </div>
+            
             <div className="p-10 space-y-5">
               <input type="text" required disabled={isSubmitting} className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-100 focus:bg-white outline-none transition-all" placeholder="Nama Juruteknik" value={actionData.techName} onChange={(e) => setActionData({...actionData, techName: e.target.value})} />
               <select required disabled={isSubmitting} className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-100 focus:bg-white outline-none transition-all appearance-none" value={actionData.techCategory} onChange={(e) => setActionData({...actionData, techCategory: e.target.value, techItem: ''})}>
@@ -1191,12 +1274,40 @@ export default function ServeDesk({ onBackHome }) {
                     {TECH_DETAILS[actionData.techCategory].map(item => <option key={item} value={item}>{item}</option>)}
                 </select>
               )}
+              
               <div className="relative">
                   <textarea required disabled={isSubmitting || isGeneratingAction} className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 text-sm font-bold h-32 resize-none focus:ring-2 focus:ring-indigo-100 focus:bg-white outline-none transition-all pb-12" placeholder="Nota ringkas kerja yang dilakukan..." value={actionData.text} onChange={(e) => setActionData({...actionData, text: e.target.value})}></textarea>
                   <button type="button" onClick={handleAIGenerateAction} disabled={isGeneratingAction || !actionData.text} className="absolute bottom-3 right-3 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-200 shadow-sm">
                       {isGeneratingAction ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />} AI Susun Ayat
                   </button>
               </div>
+
+              {/* RUANGAN MUAT NAIK GAMBAR BUKTI */}
+              <div className="space-y-3 mt-4">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Gambar Bukti (Maksimum 3)</label>
+                  
+                  {proofImages.length > 0 && (
+                      <div className="flex gap-3 mb-3 flex-wrap">
+                          {proofImages.map((src, idx) => (
+                              <div key={idx} className="relative group">
+                                  <img src={src} alt="Preview" className="h-20 w-24 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                                  <button type="button" onClick={() => setProofImages(prev => prev.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:scale-110 transition-transform">
+                                      <Trash2 size={12} />
+                                  </button>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+
+                  {proofImages.length < 3 && (
+                      <label className="border-2 border-dashed border-slate-300 rounded-[1.5rem] p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-indigo-300 transition-colors">
+                          <ImagePlus size={24} className="text-slate-400 mb-2" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Muat Naik Gambar</span>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={isSubmitting} />
+                      </label>
+                  )}
+              </div>
+
               <button onClick={handleUpdateAction} disabled={isSubmitting} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-[1.5rem] uppercase tracking-widest text-xs active:scale-95 shadow-md shadow-indigo-100 flex items-center justify-center gap-3 transition-all border border-indigo-700 mt-2">
                 {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : "SAHKAN TINDAKAN"}
               </button>
