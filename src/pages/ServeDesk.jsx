@@ -68,7 +68,7 @@ const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1WWXxJ6AXbXIY3n
 const INSTRUCTORS = [
   "Ts. Nurzharfan bin Rafei Bui",
   "Ts. Syed Mohd Yusri bin Syed Yusoff",
-  "Ts. Muhammad Hifzan bin Salimun"
+  "Ts. Muhammad Hifzan bin Salimun",
   "Encik Nazri bin Yusof"
 ];
 
