@@ -73,11 +73,25 @@ const INSTRUCTORS = [
 ];
 
 const LABS = [
-  "Lab Aplikasi",
-  "Lab Troubleshooting",
-  "Lab Maintenance",
-  "Bengkel Komputer",
-  "Bilik Server"
+  "Lab Aplikasi-TKR",
+  "Lab Troubleshooting-TKR",
+  "Lab Maintenance-TKR",
+  "Lab Server-TKR",
+  "BPPA" ,
+  "BPSM" ,
+  "BPPL" ,
+  "CESS" ,
+  "Unit Kewangan",
+  "Unit Perkhidmatan",
+  "Unit Pentadbiran",
+  "TELCOM" ,
+  "TE" ,
+  "TPPU " ,
+  "TKIM" ,
+  "TFLSOG" ,
+  "TAUTO" 
+
+
 ];
 
 const CATEGORIES = [
