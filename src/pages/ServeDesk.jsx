@@ -7,7 +7,8 @@ import {
   addDoc, 
   onSnapshot, 
   updateDoc, 
-  doc, 
+  doc,
+  deleteDoc, 
   serverTimestamp, 
   query 
 } from 'firebase/firestore';
@@ -43,12 +44,12 @@ import {
   Sparkles,
   ArrowLeft,
   ImagePlus,
-  Trash2
+  Trash2,
+  Edit
 } from 'lucide-react';
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxa6aBPzFBWf0TL9NfWlNQIi8PGFoh3aXWs6iMxG888qpzW5HTrPltTzzSysJ-IJDXs-w/exec"; 
 
-// Konfigurasi Firebase menggunakan Environment Variable (.env) untuk keselamatan GitHub
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "servedesk-adtec.firebaseapp.com",
@@ -68,25 +69,15 @@ const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1WWXxJ6AXbXIY3n
 const INSTRUCTORS = [
   "Ts. Nurzharfan bin Rafei Bui",
   "Ts. Syed Mohd Yusri bin Syed Yusoff",
-  "Ts. Muhammad Hifzan bin Salimun",
-  "Encik Nazri bin Yusof"
+  "Ts. Muhammad Hifzan bin Salimun"
 ];
 
 const LABS = [
-  "Lab Aplikasi-TKR",
-  "Lab Troubleshooting-TKR",
-  "Lab Maintenance-TKR",
-  "Lab Server-TKR",
-  "BPPA" ,
-  "BPSM" ,
-  "BPPL" ,
-  "CESS" ,
-  "TELCOM" ,
-  "TE" ,
-  "TPPU " ,
-  "TKIM" ,
-  "TFLSOG" ,
-  "TAUTO"
+  "Lab Aplikasi",
+  "Lab Troubleshooting",
+  "Lab Maintenance",
+  "Bengkel Komputer",
+  "Bilik Server"
 ];
 
 const CATEGORIES = [
@@ -111,23 +102,28 @@ const AUTH_CONFIG = {
 
 const formatDate = (timestamp) => {
     if (!timestamp) return '-';
+    // Semak adakah ia objek Date biasa (bukan dari server)
+    if (timestamp instanceof Date) return timestamp.toLocaleDateString('ms-MY');
+    // Jika ia dari Firestore
     if (typeof timestamp.toDate === 'function') return timestamp.toDate().toLocaleDateString('ms-MY');
     return 'Sedang diproses...';
 };
 
 const formatTime = (timestamp) => {
     if (!timestamp) return '-';
+    if (timestamp instanceof Date) return timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true});
     if (typeof timestamp.toDate === 'function') return timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true});
     return '...';
 };
 
+// KOMPONEN PDF YANG TELAH DIKEMAS KINI
 const PDFContent = ({ item, idPrefix }) => (
   <div 
     id={`${idPrefix}-${item.id}`} 
     className="bg-white"
     style={{ 
       width: '210mm', 
-      height: '296mm', 
+      minHeight: '296mm', // Membenarkan ia memanjang ke muka surat seterusnya
       padding: '18mm', 
       boxSizing: 'border-box', 
       color: '#000', 
@@ -234,25 +230,28 @@ const PDFContent = ({ item, idPrefix }) => (
       </tbody>
     </table>
 
-    {/* RUANGAN BUKTI GAMBAR JIKA ADA */}
+    {/* RUANGAN BUKTI GAMBAR JIKA ADA (DITETAPKAN SUPAYA TURUN PAGE KE-2 JIKA PERLU) */}
     {item.proofImages && item.proofImages.length > 0 && (
-      <div style={{ pageBreakInside: 'avoid', border: '1px solid #ccc', padding: '10px', backgroundColor: '#fafafa' }}>
-        <div style={{ fontWeight: 'bold', fontSize: '10px', marginBottom: '8px', textTransform: 'uppercase' }}>LAMPIRAN BUKTI TINDAKAN</div>
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+      <div style={{ pageBreakBefore: 'always', border: '1px solid #ccc', padding: '15px', backgroundColor: '#fafafa', marginTop: '20px' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: '15px', textTransform: 'uppercase', borderBottom: '2px solid #ddd', paddingBottom: '8px' }}>
+            LAMPIRAN BUKTI TINDAKAN KEROSAKAN
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
           {item.proofImages.map((src, index) => (
-            <div key={index} style={{ border: '1px solid #ddd', padding: '3px', backgroundColor: '#fff' }}>
-                <img src={src} alt={`Bukti ${index + 1}`} style={{ height: '120px', width: 'auto', maxWidth: '160px', objectFit: 'cover' }} />
+            <div key={index} style={{ border: '1px solid #ddd', padding: '5px', backgroundColor: '#fff', textAlign: 'center' }}>
+                <img src={src} alt={`Bukti ${index + 1}`} style={{ width: '100%', height: 'auto', maxHeight: '250px', objectFit: 'contain' }} />
             </div>
           ))}
         </div>
       </div>
     )}
 
-    <div style={{ position: 'absolute', bottom: '25mm', left: '18mm', right: '18mm', border: '1px solid #000', padding: '6px', textAlign: 'center', fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase' }}>
+    {/* FOOTER TIDAK LAGI ABSOLUTE SUPAYA TIDAK BERTINDIH */}
+    <div style={{ marginTop: '40px', border: '1px solid #000', padding: '8px', textAlign: 'center', fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', pageBreakInside: 'avoid' }}>
       BORANG INI ADALAH CETAKAN DIGITAL SERVEDESK+ - TIDAK MEMERLUKAN TANDATANGAN PENGADU
     </div>
 
-    <div style={{ position: 'absolute', bottom: '15mm', right: '18mm', fontSize: '8px', fontStyle: 'italic', color: '#888' }}>
+    <div style={{ marginTop: '10px', textAlign: 'right', fontSize: '8px', fontStyle: 'italic', color: '#888' }}>
       ServeDesk+ ADTEC SDK | {new Date().toLocaleString('ms-MY')}
     </div>
   </div>
@@ -278,6 +277,9 @@ export default function ServeDesk({ onBackHome }) {
   const [activeVerifyModal, setActiveVerifyModal] = useState(null);
   const [activePreviewItem, setActivePreviewItem] = useState(null);
   const [itemToReject, setItemToReject] = useState(null);
+
+  // STATE UNTUK EDIT
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     applicantName: '', unit: '', position: '', phone: '', email: '',
@@ -389,33 +391,45 @@ export default function ServeDesk({ onBackHome }) {
     return `ADTEC/SDK/ICT/${year}/${String(count).padStart(3, '0')}`;
   };
 
+  // FUNGSI MUAT NAIK & SIMPAN / UPDATE BORANG
   const handleSubmitComplaint = async (e) => {
     e.preventDefault();
     if (!formData.lab || !formData.category) return;
     setIsSubmitting(true);
     try {
-      const complaintsCol = collection(db, 'artifacts', appId, 'public', 'data', 'complaints');
-      const newFormNo = generateFormNumber();
-      
-      await addDoc(complaintsCol, {
-        ...formData, 
-        formNo: newFormNo,
-        status: 'Baru', 
-        technicalAction: '', 
-        technicianName: '',
-        techCategory: '', 
-        techItem: '', 
-        verifiedBy: '', 
-        dateVerified: null,
-        proofImages: [],
-        dateCreated: serverTimestamp(), 
-        dateUpdated: serverTimestamp()
-      });
+      if (editingId) {
+        // MODE EDIT: Hanya kemas kini rekod sedia ada
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'complaints', editingId);
+        await updateDoc(docRef, {
+          ...formData,
+          dateUpdated: serverTimestamp()
+        });
+      } else {
+        // MODE BARU: Tambah rekod baharu
+        const complaintsCol = collection(db, 'artifacts', appId, 'public', 'data', 'complaints');
+        const newFormNo = generateFormNumber();
+        await addDoc(complaintsCol, {
+          ...formData, 
+          formNo: newFormNo,
+          status: 'Baru', 
+          technicalAction: '', 
+          technicianName: '',
+          techCategory: '', 
+          techItem: '', 
+          verifiedBy: '', 
+          dateVerified: null,
+          proofImages: [],
+          dateCreated: serverTimestamp(), 
+          dateUpdated: serverTimestamp()
+        });
+      }
+
       setShowSuccessAnim(true);
       setTimeout(() => {
         setIsSubmitting(false);
         setShowSuccessAnim(false);
         setFormData({ applicantName: '', unit: '', position: '', phone: '', email: '', pcNo: '', lab: '', category: '', assetNo: '', issue: '' });
+        setEditingId(null);
         setShowForm(false);
       }, 2000);
     } catch (err) {
@@ -424,7 +438,36 @@ export default function ServeDesk({ onBackHome }) {
     }
   };
 
-  // FUNGSI MUAT NAIK & KECILKAN GAMBAR SEBELUM SIMPAN KE FIREBASE
+  // FUNGSI MEMBUKA MODAL EDIT
+  const handleEditClick = (item) => {
+    setFormData({
+      applicantName: item.applicantName || '',
+      unit: item.unit || '',
+      position: item.position || '',
+      phone: item.phone || '',
+      email: item.email || '',
+      pcNo: item.pcNo || '',
+      lab: item.lab || '',
+      category: item.category || '',
+      assetNo: item.assetNo || '',
+      issue: item.issue || ''
+    });
+    setEditingId(item.id);
+    setShowForm(true);
+  };
+
+  // FUNGSI PADAM (DELETE)
+  const handleDelete = async (id) => {
+    if (window.confirm("Adakah anda pasti mahu memadam rekod aduan ini secara kekal?")) {
+      try {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'complaints', id));
+      } catch (err) {
+        console.error("Gagal memadam:", err);
+        alert("Gagal memadam rekod.");
+      }
+    }
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const remainingSlots = 3 - proofImages.length;
@@ -443,7 +486,7 @@ export default function ServeDesk({ onBackHome }) {
             img.src = event.target.result;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 600; // Saiz maksimum supaya Firebase tak berat
+                const MAX_WIDTH = 600; 
                 let width = img.width;
                 let height = img.height;
 
@@ -457,7 +500,6 @@ export default function ServeDesk({ onBackHome }) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Mampatkan gambar kepada format JPEG kualiti 60%
                 const base64Compressed = canvas.toDataURL('image/jpeg', 0.6); 
                 setProofImages(prev => [...prev, base64Compressed]);
             };
@@ -475,7 +517,7 @@ export default function ServeDesk({ onBackHome }) {
         technicianName: actionData.techName,
         techCategory: actionData.techCategory, 
         techItem: actionData.techItem,
-        proofImages: proofImages, // Simpan gambar ke database
+        proofImages: proofImages,
         status: 'Penyelenggaraan', 
         dateUpdated: serverTimestamp()
       });
@@ -518,7 +560,7 @@ export default function ServeDesk({ onBackHome }) {
         windowWidth: 794 
       }, 
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: 'avoid' }
+      pagebreak: { mode: ['css', 'legacy'] } // Membenarkan page break automatik dan manual
     };
 
     try {
@@ -556,21 +598,26 @@ export default function ServeDesk({ onBackHome }) {
 
     try {
       const item = complaints.find(c => c.id === activeVerifyModal);
-      const filename = `Arkib_${item.formNo.replace(/\//g, '-')}_${item.applicantName.replace(/\s+/g, '_')}.pdf`;
-
-      await uploadToDrive(activeVerifyModal, filename);
-
       const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'complaints', activeVerifyModal);
+
+      // LANGKAH 1: Kemas kini Firestore dengan maklumat pengesahan DAHULU
       await updateDoc(docRef, {
         status: 'Selesai',
         verifiedBy: verifyName,
-        dateVerified: serverTimestamp()
+        dateVerified: new Date() // Gunakan tarikh lokal untuk UI render sertamerta
       });
 
-      setActiveVerifyModal(null);
-      setVerifyName('');
-      setIsSubmitting(false);
-      setDriveUploadStatus(null);
+      // LANGKAH 2: Tunggu 1.5 saat untuk beri masa HTML render nama yang telah dikemas kini, kemudian cetak PDF
+      setTimeout(async () => {
+          const filename = `Arkib_${item.formNo.replace(/\//g, '-')}_${item.applicantName.replace(/\s+/g, '_')}.pdf`;
+          
+          await uploadToDrive(activeVerifyModal, filename);
+
+          setActiveVerifyModal(null);
+          setVerifyName('');
+          setIsSubmitting(false);
+          setDriveUploadStatus(null);
+      }, 1500);
 
     } catch (err) {
       console.error("Ralat semasa pengesahan:", err);
@@ -624,15 +671,39 @@ export default function ServeDesk({ onBackHome }) {
     document.body.removeChild(link);
   };
 
-  // ==========================================
-  // 🤖 FUNGSI KEMAS KINI AI (GEMINI)
-  // ==========================================
+  const generatePDFFromPreview = (itemId) => {
+    const element = document.getElementById(`pdf-content-${itemId}`);
+    if (!element) return;
+
+    const safeName = (activePreviewItem?.applicantName || 'Borang').replace(/[^a-z0-9]/gi, '_');
+    const filename = `Borang_Aduan_ADTEC_${safeName}.pdf`;
+
+    const opt = { 
+      margin: 0, 
+      filename: filename, 
+      image: { type: 'jpeg', quality: 1.0 }, 
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        windowWidth: 794
+      }, 
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    };
+
+    window.html2pdf().set(opt).from(element).save();
+  };
+
   const callGeminiAI = async (text, roleType) => {
     if (!text || text.trim() === '') return text;
 
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    
-    // Nama model telah diperbetulkan
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     let systemPrompt = "";
@@ -695,7 +766,7 @@ export default function ServeDesk({ onBackHome }) {
       }}
     >
       <div className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none overflow-hidden" style={{ height: 0, width: 0 }}>
-        {complaints.filter(c => c.status === 'Penyelenggaraan').map(item => (
+        {complaints.filter(c => c.status === 'Selesai' || c.status === 'Penyelenggaraan').map(item => (
           <PDFContent key={item.id} item={item} idPrefix="pdf-content-hidden" />
         ))}
       </div>
@@ -933,7 +1004,7 @@ export default function ServeDesk({ onBackHome }) {
                   <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-lg mb-6">
                     Platform rasmi untuk melaporkan kerosakan perkakasan, perisian, atau masalah rangkaian di makmal dan bengkel. Kami sentiasa bersedia membantu anda.
                   </p>
-                  <button onClick={() => setShowForm(true)} className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-3 shadow-lg shadow-indigo-100 transition-all active:scale-95 border border-indigo-700">
+                  <button onClick={() => {setEditingId(null); setShowForm(true);}} className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-3 shadow-lg shadow-indigo-100 transition-all active:scale-95 border border-indigo-700">
                      <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" /> Lapor Kerosakan Baru
                   </button>
                 </div>
@@ -1100,7 +1171,8 @@ export default function ServeDesk({ onBackHome }) {
                            )}
                         </div>
 
-                        <div className="space-y-2 mt-auto">
+                        {/* BARISAN BUTANG TINDAKAN (TERMASUK EDIT & PADAM) */}
+                        <div className="space-y-3 mt-auto">
                           <div className="flex gap-2">
                             {role === 'juruteknik' && item.status !== 'Selesai' && item.status !== 'Ditolak' && isInstAuthenticated && (
                               <button 
@@ -1127,9 +1199,21 @@ export default function ServeDesk({ onBackHome }) {
                                 </button>
                             )}
                           </div>
+
+                          {/* BUTANG EDIT & PADAM UNTUK STAF */}
+                          {isInstAuthenticated && (
+                             <div className="flex gap-2 border-t border-slate-100 pt-3 mt-1">
+                                <button onClick={() => handleEditClick(item)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider" title="Edit Borang">
+                                   <Edit size={14}/> Edit
+                                </button>
+                                <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider" title="Padam Rekod">
+                                   <Trash2 size={14}/> Padam
+                                </button>
+                             </div>
+                          )}
                           
                           {item.status === 'Selesai' && (
-                            <button onClick={() => setActivePreviewItem(item)} className="w-full bg-slate-900 text-white hover:bg-black py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-800 shadow-md">
+                            <button onClick={() => setActivePreviewItem(item)} className="w-full bg-slate-900 text-white hover:bg-black py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-800 shadow-md mt-2">
                               <Eye size={14}/> Papar Borang Digital
                             </button>
                           )}
@@ -1144,14 +1228,14 @@ export default function ServeDesk({ onBackHome }) {
         )}
       </main>
 
-      {/* MODAL: Aduan Baru - Disusun menegak (stacked) dan lebih profesional */}
+      {/* MODAL: Aduan Baru / Edit Borang */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-start justify-center p-4 py-10 sm:py-16 z-50 overflow-y-auto text-left">
           <div className={`bg-white rounded-[2rem] shadow-2xl max-w-5xl w-full relative overflow-hidden transform transition-all duration-500 border border-slate-100 ${isSubmitting ? 'scale-95 opacity-50' : 'scale-100'}`}>
             {showSuccessAnim && (
                 <div className="absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center animate-in fade-in">
                     <div className="bg-emerald-50 p-6 rounded-full animate-bounce border-[8px] border-emerald-100/50"><CheckCircle size={80} className="text-emerald-500" /></div>
-                    <h2 className="text-3xl font-black text-slate-800 mt-8 uppercase tracking-tighter">Aduan Berjaya Dihantar!</h2>
+                    <h2 className="text-3xl font-black text-slate-800 mt-8 uppercase tracking-tighter">{editingId ? 'Borang Dikemas Kini!' : 'Aduan Berjaya Dihantar!'}</h2>
                 </div>
             )}
             
@@ -1159,11 +1243,11 @@ export default function ServeDesk({ onBackHome }) {
                 <div className="flex items-center gap-4">
                   <div className="bg-indigo-50 text-indigo-600 p-3 rounded-2xl border border-indigo-100"><Send size={22} /></div>
                   <div>
-                    <h2 className="text-xl font-black tracking-tight text-slate-800 uppercase leading-none">Borang Aduan Kerosakan</h2>
+                    <h2 className="text-xl font-black tracking-tight text-slate-800 uppercase leading-none">{editingId ? 'Edit Aduan Kerosakan' : 'Borang Aduan Kerosakan'}</h2>
                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1.5">Sokongan Teknikal ICT ADTEC SDK</p>
                   </div>
                 </div>
-                <button disabled={isSubmitting} onClick={() => setShowForm(false)} className="bg-slate-50 hover:bg-slate-100 text-slate-500 p-2.5 rounded-xl transition-all border border-slate-200"><X size={20} /></button>
+                <button disabled={isSubmitting} onClick={() => {setShowForm(false); setEditingId(null);}} className="bg-slate-50 hover:bg-slate-100 text-slate-500 p-2.5 rounded-xl transition-all border border-slate-200"><X size={20} /></button>
             </div>
             
             <form onSubmit={handleSubmitComplaint} className="p-8 md:p-10 bg-slate-50/50">
@@ -1235,9 +1319,9 @@ export default function ServeDesk({ onBackHome }) {
               </div>
 
               <div className="mt-10 flex gap-4">
-                <button type="button" disabled={isSubmitting} onClick={() => setShowForm(false)} className="flex-1 bg-white border border-slate-200 text-slate-600 font-black py-4 rounded-xl transition-all uppercase tracking-widest text-xs active:scale-95 hover:bg-slate-50 shadow-sm">BATAL</button>
+                <button type="button" disabled={isSubmitting} onClick={() => {setShowForm(false); setEditingId(null);}} className="flex-1 bg-white border border-slate-200 text-slate-600 font-black py-4 rounded-xl transition-all uppercase tracking-widest text-xs active:scale-95 hover:bg-slate-50 shadow-sm">BATAL</button>
                 <button type="submit" disabled={isSubmitting} className="flex-[2] bg-indigo-600 text-white font-black py-4 rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 active:scale-95 border border-indigo-700 transition-all">
-                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <>HANTAR ADUAN <Send size={18}/></>}
+                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <>{editingId ? 'SIMPAN KEMAS KINI' : 'HANTAR ADUAN'} <Send size={18}/></>}
                 </button>
               </div>
             </form>
@@ -1248,7 +1332,7 @@ export default function ServeDesk({ onBackHome }) {
       {/* MODAL: Update Log Juruteknik */}
       {activeTechModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto text-left">
-          <div className={`bg-white rounded-[3rem] shadow-2xl max-w-md w-full relative overflow-hidden transform transition-all ${isSubmitting ? 'scale-95' : 'scale-100'}`}>
+          <div className={`bg-white rounded-[3rem] shadow-2xl max-md w-full relative overflow-hidden transform transition-all ${isSubmitting ? 'scale-95' : 'scale-100'}`}>
             {showSuccessAnim && (
                 <div className="absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center animate-in fade-in">
                     <div className="bg-indigo-100 p-6 rounded-full animate-pulse border-[10px] border-indigo-50"><Wrench size={60} className="text-indigo-600" /></div>
