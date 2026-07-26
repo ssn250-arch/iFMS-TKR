@@ -46,7 +46,9 @@ import {
   ImagePlus,
   Trash2,
   Edit,
-  FileText
+  FileText,
+  Activity,
+  History
 } from 'lucide-react';
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxa6aBPzFBWf0TL9NfWlNQIi8PGFoh3aXWs6iMxG888qpzW5HTrPltTzzSysJ-IJDXs-w/exec"; 
@@ -373,6 +375,14 @@ export default function ServeDesk({ onBackHome }) {
     selesai: complaints.filter(c => c.status === 'Selesai').length,
     total: complaints.length
   };
+
+  // LOGIK SMART FILTERING UNTUK DASHBOARD MAKMAL BERMASALAH
+  const activeLabStats = LABS.map(lab => {
+    return {
+      lab,
+      count: complaints.filter(c => c.lab === lab).length
+    };
+  }).filter(l => l.count > 0).sort((a, b) => b.count - a.count);
 
   const handleSystemLogin = (e) => {
     e.preventDefault();
@@ -876,31 +886,66 @@ export default function ServeDesk({ onBackHome }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white/90 backdrop-blur-sm rounded-[3rem] border border-slate-200/80 shadow-sm p-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="bg-slate-100 p-2 rounded-xl text-slate-600 border border-slate-200"><BarChart3 size={20}/></div>
-                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Status Aduan Makmal</h3>
+                {/* SMART FILTERING: Hanya papar makmal yang ada kes */}
+                <div className="lg:col-span-2 space-y-8">
+                    <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] border border-slate-200/80 shadow-sm p-8">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 border border-indigo-100"><Activity size={20}/></div>
+                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Kekerapan Aduan Makmal</h3>
+                        </div>
+                        
+                        {activeLabStats.length > 0 ? (
+                            <div className="space-y-6">
+                                {activeLabStats.map((item, index) => {
+                                    const percentage = stats.total > 0 ? (item.count / stats.total) * 100 : 0;
+                                    return (
+                                        <div key={item.lab} className="relative group">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[10px] font-black text-slate-400 w-4">#{index + 1}</span>
+                                                    <p className="text-sm font-bold text-slate-700">{item.lab}</p>
+                                                </div>
+                                                <p className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">{item.count} Kes</p>
+                                            </div>
+                                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden ml-7 w-[calc(100%-28px)]">
+                                                <div className="h-full bg-gradient-to-r from-indigo-500 to-blue-400 rounded-full transition-all duration-1000 group-hover:from-indigo-400 group-hover:to-blue-300" style={{ width: `${percentage}%` }}></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="py-10 text-center flex flex-col items-center">
+                                <div className="bg-emerald-50 p-5 rounded-full text-emerald-500 mb-4 border-4 border-emerald-100/50"><ShieldCheck size={36} /></div>
+                                <p className="text-sm font-black text-slate-700 uppercase">Semua Makmal Beroperasi Cemerlang!</p>
+                                <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-widest font-bold">Tiada Kerosakan Direkodkan Buat Masa Ini</p>
+                            </div>
+                        )}
                     </div>
-                    <div className="space-y-8">
-                        {LABS.map(lab => {
-                            const count = complaints.filter(c => c.lab === lab).length;
-                            const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
-                            return (
-                                <div key={lab}>
-                                    <div className="flex justify-between items-end mb-2">
-                                        <p className="text-xs font-black text-slate-600 uppercase tracking-widest">{lab}</p>
-                                        <p className="text-xs font-black text-indigo-600">{count} Rekod</p>
-                                    </div>
-                                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60 shadow-inner">
-                                        <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${percentage}%` }}></div>
+
+                    {/* LIVE FEED: Log Aktiviti Terkini */}
+                    <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] border border-slate-200/80 shadow-sm p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="bg-slate-100 p-2 rounded-xl text-slate-600 border border-slate-200"><History size={20}/></div>
+                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Log Aktiviti Terkini</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {complaints.slice(0, 4).map(c => (
+                                <div key={c.id} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-default">
+                                    <div className={`mt-1.5 h-2.5 w-2.5 rounded-full shrink-0 ${c.status === 'Baru' ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' : c.status === 'Selesai' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]'}`}></div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-800 line-clamp-1">{c.lab} <span className="text-slate-400 font-normal ml-1">| PC-{c.pcNo}</span></p>
+                                        <p className="text-[10px] text-slate-500 mt-1 line-clamp-1">{c.status === 'Baru' ? c.issue : c.technicalAction}</p>
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-2">{formatDate(c.dateUpdated || c.dateCreated)} - {formatTime(c.dateUpdated || c.dateCreated)}</p>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            ))}
+                            {complaints.length === 0 && <p className="text-[10px] text-slate-400 text-center py-6 font-bold uppercase tracking-widest">Tiada Aktiviti Direkodkan</p>}
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] border border-slate-200/80 shadow-sm p-8">
+                <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] border border-slate-200/80 shadow-sm p-8 h-fit sticky top-28">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="bg-slate-100 p-2 rounded-xl text-slate-600 border border-slate-200"><PieChart size={20}/></div>
                         <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Kategori Isu</h3>
@@ -992,7 +1037,7 @@ export default function ServeDesk({ onBackHome }) {
 
             {role === 'pemohon' && (
               <div className="animate-in fade-in duration-500">
-                <div className="bg-white/90 backdrop-blur-sm rounded-[2.5rem] border border-slate-200/80 p-8 md:p-10 mb-12 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+                <div className="bg-white/90 backdrop-blur-sm rounded-[2.5rem] border border-slate-200/80 p-8 md:p-10 mb-16 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none -mr-20 -mt-20"></div>
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-widest mb-4">
@@ -1024,41 +1069,49 @@ export default function ServeDesk({ onBackHome }) {
                   </div>
                 </div>
 
-                {/* Seksyen Langkah-langkah Baharu Untuk Pemohon */}
+                {/* Seksyen Langkah-langkah Baharu Untuk Pemohon - MODERN UI */}
                 <div className="px-2 sm:px-8 mb-4">
-                  <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Aliran Proses Penyelenggaraan</h3>
+                  <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Bagaimana Ia Berfungsi?</h3>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                    {/* Garisan penyambung beranimasi */}
-                    <div className="hidden md:block absolute top-1/2 left-8 right-8 h-1 bg-gradient-to-r from-indigo-100 via-amber-100 to-emerald-100 -z-10 -translate-y-1/2 rounded-full animate-pulse"></div>
+                  <div className="flex flex-col md:flex-row gap-8 relative">
                     
                     {/* Langkah 1 */}
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-2 hover:shadow-lg hover:border-indigo-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                      <div className="w-14 h-14 mx-auto bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-5 border border-indigo-100 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
-                        <FileText size={24} />
+                    <div className="flex-1 relative group animate-in fade-in slide-in-from-bottom-8 duration-500">
+                      <div className="absolute -top-4 -left-4 w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-lg shadow-lg z-10 group-hover:scale-110 transition-transform duration-300">1</div>
+                      <div className="h-full bg-white/80 backdrop-blur-sm p-8 pt-10 rounded-3xl border-2 border-transparent hover:border-indigo-100 shadow-sm hover:shadow-xl transition-all duration-300 group-hover:-translate-y-2">
+                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-5 group-hover:rotate-12 transition-transform duration-300">
+                          <FileText size={24} />
+                        </div>
+                        <h4 className="font-black text-slate-800 text-base uppercase tracking-tight mb-2">Lapor Kerosakan</h4>
+                        <p className="text-sm text-slate-500 font-medium leading-relaxed">Pemohon mengisi borang aduan digital dengan butiran masalah yang dihadapi.</p>
                       </div>
-                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">1. Lapor Kerosakan</h4>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Isi borang aduan digital dengan menyatakan butiran kerosakan secara terperinci.</p>
                     </div>
 
                     {/* Langkah 2 */}
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-2 hover:shadow-lg hover:border-amber-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                      <div className="w-14 h-14 mx-auto bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5 border border-amber-100 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 shadow-inner">
-                        <Wrench size={24} />
+                    <div className="flex-1 relative group animate-in fade-in slide-in-from-bottom-8 duration-700">
+                      <div className="absolute -top-4 -left-4 w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center font-black text-lg shadow-lg z-10 group-hover:scale-110 transition-transform duration-300">2</div>
+                      <div className="h-full bg-white/80 backdrop-blur-sm p-8 pt-10 rounded-3xl border-2 border-transparent hover:border-amber-100 shadow-sm hover:shadow-xl transition-all duration-300 group-hover:-translate-y-2">
+                        <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5 group-hover:-rotate-12 transition-transform duration-300">
+                          <Wrench size={24} />
+                        </div>
+                        <h4 className="font-black text-slate-800 text-base uppercase tracking-tight mb-2">Penyelenggaraan</h4>
+                        <p className="text-sm text-slate-500 font-medium leading-relaxed">Juruteknik ICT memeriksa, membaiki, dan merekod log pembaikan dalam sistem.</p>
                       </div>
-                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">2. Penyelenggaraan</h4>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Juruteknik ICT akan membuat semakan, membaiki, dan merekod log tindakan.</p>
                     </div>
 
                     {/* Langkah 3 */}
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-2 hover:shadow-lg hover:border-emerald-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                      <div className="w-14 h-14 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-5 border border-emerald-100 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
-                        <ShieldCheck size={24} />
+                    <div className="flex-1 relative group animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                      <div className="absolute -top-4 -left-4 w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center font-black text-lg shadow-lg z-10 group-hover:scale-110 transition-transform duration-300">3</div>
+                      <div className="h-full bg-white/80 backdrop-blur-sm p-8 pt-10 rounded-3xl border-2 border-transparent hover:border-emerald-100 shadow-sm hover:shadow-xl transition-all duration-300 group-hover:-translate-y-2">
+                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-5 group-hover:rotate-12 transition-transform duration-300">
+                          <ShieldCheck size={24} />
+                        </div>
+                        <h4 className="font-black text-slate-800 text-base uppercase tracking-tight mb-2">Pengesahan</h4>
+                        <p className="text-sm text-slate-500 font-medium leading-relaxed">Pengajar menyemak hasil kerja dan membuat pengesahan akhir secara digital.</p>
                       </div>
-                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">3. Pengesahan</h4>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Pengajar akan menyemak hasil pembaikan dan mengesahkan borang secara digital.</p>
                     </div>
+
                   </div>
                 </div>
               </div>
