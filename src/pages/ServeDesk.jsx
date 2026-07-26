@@ -73,25 +73,11 @@ const INSTRUCTORS = [
 ];
 
 const LABS = [
-  "Lab Aplikasi-TKR",
-  "Lab Troubleshooting-TKR",
-  "Lab Maintenance-TKR",
-  "Lab Server-TKR",
-  "BPPA" ,
-  "BPSM" ,
-  "BPPL" ,
-  "CESS" ,
-  "Unit Kewangan",
-  "Unit Perkhidmatan",
-  "Unit Pentadbiran",
-  "TELCOM" ,
-  "TE" ,
-  "TPPU " ,
-  "TKIM" ,
-  "TFLSOG" ,
-  "TAUTO" 
-
-
+  "Lab Aplikasi",
+  "Lab Troubleshooting",
+  "Lab Maintenance",
+  "Bengkel Komputer",
+  "Bilik Server"
 ];
 
 const CATEGORIES = [
@@ -116,9 +102,7 @@ const AUTH_CONFIG = {
 
 const formatDate = (timestamp) => {
     if (!timestamp) return '-';
-    // Semak adakah ia objek Date biasa (bukan dari server)
     if (timestamp instanceof Date) return timestamp.toLocaleDateString('ms-MY');
-    // Jika ia dari Firestore
     if (typeof timestamp.toDate === 'function') return timestamp.toDate().toLocaleDateString('ms-MY');
     return 'Sedang diproses...';
 };
@@ -130,14 +114,13 @@ const formatTime = (timestamp) => {
     return '...';
 };
 
-// KOMPONEN PDF YANG TELAH DIKEMAS KINI
 const PDFContent = ({ item, idPrefix }) => (
   <div 
     id={`${idPrefix}-${item.id}`} 
     className="bg-white"
     style={{ 
       width: '210mm', 
-      minHeight: '296mm', // Membenarkan ia memanjang ke muka surat seterusnya
+      minHeight: '296mm', 
       padding: '18mm', 
       boxSizing: 'border-box', 
       color: '#000', 
@@ -244,7 +227,6 @@ const PDFContent = ({ item, idPrefix }) => (
       </tbody>
     </table>
 
-    {/* RUANGAN BUKTI GAMBAR JIKA ADA (DITETAPKAN SUPAYA TURUN PAGE KE-2 JIKA PERLU) */}
     {item.proofImages && item.proofImages.length > 0 && (
       <div style={{ pageBreakBefore: 'always', border: '1px solid #ccc', padding: '15px', backgroundColor: '#fafafa', marginTop: '20px' }}>
         <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: '15px', textTransform: 'uppercase', borderBottom: '2px solid #ddd', paddingBottom: '8px' }}>
@@ -260,7 +242,6 @@ const PDFContent = ({ item, idPrefix }) => (
       </div>
     )}
 
-    {/* FOOTER TIDAK LAGI ABSOLUTE SUPAYA TIDAK BERTINDIH */}
     <div style={{ marginTop: '40px', border: '1px solid #000', padding: '8px', textAlign: 'center', fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', pageBreakInside: 'avoid' }}>
       BORANG INI ADALAH CETAKAN DIGITAL SERVEDESK+ - TIDAK MEMERLUKAN TANDATANGAN PENGADU
     </div>
@@ -292,7 +273,6 @@ export default function ServeDesk({ onBackHome }) {
   const [activePreviewItem, setActivePreviewItem] = useState(null);
   const [itemToReject, setItemToReject] = useState(null);
 
-  // STATE UNTUK EDIT
   const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -405,21 +385,18 @@ export default function ServeDesk({ onBackHome }) {
     return `ADTEC/SDK/ICT/${year}/${String(count).padStart(3, '0')}`;
   };
 
-  // FUNGSI MUAT NAIK & SIMPAN / UPDATE BORANG
   const handleSubmitComplaint = async (e) => {
     e.preventDefault();
     if (!formData.lab || !formData.category) return;
     setIsSubmitting(true);
     try {
       if (editingId) {
-        // MODE EDIT: Hanya kemas kini rekod sedia ada
         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'complaints', editingId);
         await updateDoc(docRef, {
           ...formData,
           dateUpdated: serverTimestamp()
         });
       } else {
-        // MODE BARU: Tambah rekod baharu
         const complaintsCol = collection(db, 'artifacts', appId, 'public', 'data', 'complaints');
         const newFormNo = generateFormNumber();
         await addDoc(complaintsCol, {
@@ -452,7 +429,6 @@ export default function ServeDesk({ onBackHome }) {
     }
   };
 
-  // FUNGSI MEMBUKA MODAL EDIT
   const handleEditClick = (item) => {
     setFormData({
       applicantName: item.applicantName || '',
@@ -470,7 +446,6 @@ export default function ServeDesk({ onBackHome }) {
     setShowForm(true);
   };
 
-  // FUNGSI PADAM (DELETE)
   const handleDelete = async (id) => {
     if (window.confirm("Adakah anda pasti mahu memadam rekod aduan ini secara kekal?")) {
       try {
@@ -574,7 +549,7 @@ export default function ServeDesk({ onBackHome }) {
         windowWidth: 794 
       }, 
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] } // Membenarkan page break automatik dan manual
+      pagebreak: { mode: ['css', 'legacy'] }
     };
 
     try {
@@ -614,17 +589,14 @@ export default function ServeDesk({ onBackHome }) {
       const item = complaints.find(c => c.id === activeVerifyModal);
       const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'complaints', activeVerifyModal);
 
-      // LANGKAH 1: Kemas kini Firestore dengan maklumat pengesahan DAHULU
       await updateDoc(docRef, {
         status: 'Selesai',
         verifiedBy: verifyName,
-        dateVerified: new Date() // Gunakan tarikh lokal untuk UI render sertamerta
+        dateVerified: new Date()
       });
 
-      // LANGKAH 2: Tunggu 1.5 saat untuk beri masa HTML render nama yang telah dikemas kini, kemudian cetak PDF
       setTimeout(async () => {
           const filename = `Arkib_${item.formNo.replace(/\//g, '-')}_${item.applicantName.replace(/\s+/g, '_')}.pdf`;
-          
           await uploadToDrive(activeVerifyModal, filename);
 
           setActiveVerifyModal(null);
@@ -1039,205 +1011,209 @@ export default function ServeDesk({ onBackHome }) {
               </div>
             )}
 
-            <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-8">
-              <div className="flex flex-col md:flex-row gap-4 w-full flex-grow">
-                <div className="relative flex-grow">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Cari No. Borang, Nama Pengadu, atau Isu..." 
-                    className="w-full bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="relative w-full md:w-64 shrink-0">
-                  <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <select 
-                    value={filterLab} 
-                    onChange={(e) => setFilterLab(e.target.value)} 
-                    className="w-full bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold shadow-sm outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option>Semua Makmal</option>
-                    {LABS.map(lab => <option key={lab} value={lab}>{lab}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {filteredComplaints.length === 0 ? (
-                <div className="bg-white/80 backdrop-blur-md p-24 rounded-[3.5rem] border-2 border-dashed border-slate-200/80 flex flex-col items-center text-center shadow-sm">
-                  <ClipboardList size={64} className="text-slate-300 mb-6 opacity-50" />
-                  <h3 className="font-black text-slate-800 text-2xl mb-2 tracking-widest uppercase">Tiada Rekod Dijumpai</h3>
-                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Cuba tukar penapis atau kata kunci carian anda</p>
-                </div>
-              ) : (
-                filteredComplaints.map((item) => (
-                  <div key={item.id} className="relative bg-white/90 backdrop-blur-sm rounded-[2.5rem] border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden group">
-                    <div className="p-8 flex flex-col xl:flex-row gap-8">
-                      <div className="xl:w-60 shrink-0 flex flex-col justify-between border-b xl:border-b-0 xl:border-r border-slate-100 pb-6 xl:pb-0 xl:pr-8">
-                        <div>
-                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 border ${
-                            item.status === 'Baru' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
-                            item.status === 'Penyelenggaraan' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 
-                            item.status === 'Selesai' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
-                          }`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${
-                              item.status === 'Baru' ? 'bg-amber-500' : 
-                              item.status === 'Penyelenggaraan' ? 'bg-indigo-500 animate-pulse' : 
-                              item.status === 'Selesai' ? 'bg-emerald-500' : 'bg-red-500'
-                            }`}></span>
-                            {item.status}
-                          </div>
-                          
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Maklumat Masa</p>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-2 text-slate-600 text-xs font-bold">
-                              <Calendar size={14} className="text-slate-400"/> {formatDate(item.dateCreated)}
-                            </div>
-                            <div className="flex items-center gap-2 text-indigo-600 text-xs font-black">
-                              <Clock size={14} className="text-indigo-400"/> {formatTime(item.dateCreated)}
-                            </div>
-                          </div>
-                        </div>
-
-                        {item.formNo && (
-                          <div className="mt-6">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">No. Rujukan</p>
-                            <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-600 text-center shadow-inner">
-                              {item.formNo}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-grow">
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <span className="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">{item.lab}</span>
-                          <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">{item.category}</span>
-                        </div>
-                        
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2 flex items-center gap-3">
-                          PC-{item.pcNo} 
-                          <span className="text-xs bg-slate-800 text-white px-2 py-0.5 rounded-md font-mono shadow-sm">#{item.assetNo || 'NA'}</span>
-                        </h3>
-                        
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 relative shadow-inner">
-                          <AlertCircle className="absolute -top-3 -right-3 text-amber-500 bg-white rounded-full p-0.5 shadow-sm" size={24} />
-                          <p className="text-slate-700 text-sm font-medium leading-relaxed italic">"{item.issue}"</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           <div className="flex items-center gap-3 border border-slate-100 p-3.5 rounded-2xl bg-white shadow-sm hover:border-indigo-100 transition-colors">
-                              <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 border border-indigo-100"><User size={16} /></div>
-                              <div>
-                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Pengadu</p>
-                                 <p className="text-xs font-black text-slate-800">{item.applicantName}</p>
-                              </div>
-                           </div>
-                           <div className="flex items-center gap-3 border border-slate-100 p-3.5 rounded-2xl bg-white shadow-sm hover:border-indigo-100 transition-colors">
-                              <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 border border-indigo-100"><Briefcase size={16} /></div>
-                              <div>
-                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Unit / Jawatan</p>
-                                 <p className="text-xs font-black text-slate-800 truncate">{item.unit}</p>
-                              </div>
-                           </div>
-                        </div>
-                      </div>
-
-                      <div className="xl:w-80 shrink-0 border-t xl:border-t-0 xl:border-l border-slate-100 pt-6 xl:pt-0 xl:pl-8 flex flex-col">
-                        <div className="flex-grow mb-6">
-                           <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">LOG TINDAKAN ICT</h4>
-                           
-                           {item.technicalAction ? (
-                             <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-3 shadow-inner">
-                                <div className="flex flex-wrap gap-2">
-                                   <span className="bg-indigo-600 text-white px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter">{item.techCategory}</span>
-                                   <span className="bg-white text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md text-[8px] font-black shadow-sm">{item.techItem}</span>
-                                </div>
-                                <p className="text-xs text-slate-800 font-bold italic leading-snug">"{item.technicalAction}"</p>
-                                <div className="flex items-center gap-2 pt-2 border-t border-indigo-100/50 mt-2">
-                                  <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center text-[8px] font-black text-indigo-700 uppercase shadow-sm border border-indigo-100">
-                                    {item.technicianName?.charAt(0) || 'T'}
-                                  </div>
-                                  <p className="text-[9px] text-indigo-700 font-black uppercase tracking-tighter">{item.technicianName}</p>
-                                </div>
-                             </div>
-                           ) : (
-                             <div className="py-8 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/80 text-slate-400 font-black uppercase text-[10px] tracking-widest">
-                               Menunggu Juruteknik
-                             </div>
-                           )}
-                           
-                           {item.verifiedBy && (
-                             <div className="mt-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-4 shadow-sm">
-                               <div className="bg-emerald-600 p-2 rounded-xl text-white shadow-md shadow-emerald-100"><ShieldCheck size={18} /></div>
-                               <div className="text-left overflow-hidden">
-                                  <p className="text-[9px] text-emerald-700 font-black uppercase leading-none mb-1 tracking-widest">Disahkan Oleh</p>
-                                  <p className="text-xs font-black text-slate-800 leading-tight truncate">{item.verifiedBy}</p>
-                                  <p className="text-[8px] text-slate-500 font-bold mt-1 uppercase tracking-tighter flex items-center gap-1">
-                                    {formatDate(item.dateVerified)}
-                                  </p>
-                               </div>
-                             </div>
-                           )}
-                        </div>
-
-                        {/* BARISAN BUTANG TINDAKAN (TERMASUK EDIT & PADAM) */}
-                        <div className="space-y-3 mt-auto">
-                          <div className="flex gap-2">
-                            {role === 'juruteknik' && item.status !== 'Selesai' && item.status !== 'Ditolak' && isInstAuthenticated && (
-                              <button 
-                                onClick={() => { 
-                                  setActiveTechModal(item.id); 
-                                  setActionData({ text: item.technicalAction || '', techName: item.technicianName || '', techCategory: item.techCategory || '', techItem: item.techItem || '' }); 
-                                  setProofImages(item.proofImages || []);
-                                }} 
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all border border-indigo-700"
-                              >
-                                Update Log
-                              </button>
-                            )}
-                            
-                            {role === 'pengajar' && item.status === 'Penyelenggaraan' && isInstAuthenticated && (
-                              <button onClick={() => setActiveVerifyModal(item.id)} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-2 border border-emerald-700">
-                                <CheckCircle size={14}/> Sahkan & Arkib
-                              </button>
-                            )}
-
-                            {role === 'pengajar' && (item.status === 'Baru' || item.status === 'Penyelenggaraan') && isInstAuthenticated && (
-                                <button onClick={() => setItemToReject(item.id)} className="bg-white text-red-600 hover:bg-red-50 p-3.5 rounded-xl transition-all active:scale-95 border border-slate-200 shadow-sm" title="Tolak Aduan">
-                                    <X size={16} />
-                                </button>
-                            )}
-                          </div>
-
-                          {/* BUTANG EDIT & PADAM UNTUK STAF */}
-                          {isInstAuthenticated && (
-                             <div className="flex gap-2 border-t border-slate-100 pt-3 mt-1">
-                                <button onClick={() => handleEditClick(item)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider" title="Edit Borang">
-                                   <Edit size={14}/> Edit
-                                </button>
-                                <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider" title="Padam Rekod">
-                                   <Trash2 size={14}/> Padam
-                                </button>
-                             </div>
-                          )}
-                          
-                          {item.status === 'Selesai' && (
-                            <button onClick={() => setActivePreviewItem(item)} className="w-full bg-slate-900 text-white hover:bg-black py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-800 shadow-md mt-2">
-                              <Eye size={14}/> Papar Borang Digital
-                            </button>
-                          )}
-                        </div>
-                      </div>
+            {role !== 'pemohon' && (
+              <>
+                <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-8">
+                  <div className="flex flex-col md:flex-row gap-4 w-full flex-grow">
+                    <div className="relative flex-grow">
+                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="text" 
+                        placeholder="Cari No. Borang, Nama Pengadu, atau Isu..." 
+                        className="w-full bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative w-full md:w-64 shrink-0">
+                      <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <select 
+                        value={filterLab} 
+                        onChange={(e) => setFilterLab(e.target.value)} 
+                        className="w-full bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold shadow-sm outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option>Semua Makmal</option>
+                        {LABS.map(lab => <option key={lab} value={lab}>{lab}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+
+                <div className="space-y-6">
+                  {filteredComplaints.length === 0 ? (
+                    <div className="bg-white/80 backdrop-blur-md p-24 rounded-[3.5rem] border-2 border-dashed border-slate-200/80 flex flex-col items-center text-center shadow-sm">
+                      <ClipboardList size={64} className="text-slate-300 mb-6 opacity-50" />
+                      <h3 className="font-black text-slate-800 text-2xl mb-2 tracking-widest uppercase">Tiada Rekod Dijumpai</h3>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Cuba tukar penapis atau kata kunci carian anda</p>
+                    </div>
+                  ) : (
+                    filteredComplaints.map((item) => (
+                      <div key={item.id} className="relative bg-white/90 backdrop-blur-sm rounded-[2.5rem] border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden group">
+                        <div className="p-8 flex flex-col xl:flex-row gap-8">
+                          <div className="xl:w-60 shrink-0 flex flex-col justify-between border-b xl:border-b-0 xl:border-r border-slate-100 pb-6 xl:pb-0 xl:pr-8">
+                            <div>
+                              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 border ${
+                                item.status === 'Baru' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
+                                item.status === 'Penyelenggaraan' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 
+                                item.status === 'Selesai' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+                              }`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${
+                                  item.status === 'Baru' ? 'bg-amber-500' : 
+                                  item.status === 'Penyelenggaraan' ? 'bg-indigo-500 animate-pulse' : 
+                                  item.status === 'Selesai' ? 'bg-emerald-500' : 'bg-red-500'
+                                }`}></span>
+                                {item.status}
+                              </div>
+                              
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Maklumat Masa</p>
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2 text-slate-600 text-xs font-bold">
+                                  <Calendar size={14} className="text-slate-400"/> {formatDate(item.dateCreated)}
+                                </div>
+                                <div className="flex items-center gap-2 text-indigo-600 text-xs font-black">
+                                  <Clock size={14} className="text-indigo-400"/> {formatTime(item.dateCreated)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {item.formNo && (
+                              <div className="mt-6">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">No. Rujukan</p>
+                                <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-600 text-center shadow-inner">
+                                  {item.formNo}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-grow">
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              <span className="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">{item.lab}</span>
+                              <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">{item.category}</span>
+                            </div>
+                            
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2 flex items-center gap-3">
+                              PC-{item.pcNo} 
+                              <span className="text-xs bg-slate-800 text-white px-2 py-0.5 rounded-md font-mono shadow-sm">#{item.assetNo || 'NA'}</span>
+                            </h3>
+                            
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 relative shadow-inner">
+                              <AlertCircle className="absolute -top-3 -right-3 text-amber-500 bg-white rounded-full p-0.5 shadow-sm" size={24} />
+                              <p className="text-slate-700 text-sm font-medium leading-relaxed italic">"{item.issue}"</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                               <div className="flex items-center gap-3 border border-slate-100 p-3.5 rounded-2xl bg-white shadow-sm hover:border-indigo-100 transition-colors">
+                                  <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 border border-indigo-100"><User size={16} /></div>
+                                  <div>
+                                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Pengadu</p>
+                                     <p className="text-xs font-black text-slate-800">{item.applicantName}</p>
+                                  </div>
+                               </div>
+                               <div className="flex items-center gap-3 border border-slate-100 p-3.5 rounded-2xl bg-white shadow-sm hover:border-indigo-100 transition-colors">
+                                  <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 border border-indigo-100"><Briefcase size={16} /></div>
+                                  <div>
+                                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Unit / Jawatan</p>
+                                     <p className="text-xs font-black text-slate-800 truncate">{item.unit}</p>
+                                  </div>
+                               </div>
+                            </div>
+                          </div>
+
+                          <div className="xl:w-80 shrink-0 border-t xl:border-t-0 xl:border-l border-slate-100 pt-6 xl:pt-0 xl:pl-8 flex flex-col">
+                            <div className="flex-grow mb-6">
+                               <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">LOG TINDAKAN ICT</h4>
+                               
+                               {item.technicalAction ? (
+                                 <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-3 shadow-inner">
+                                    <div className="flex flex-wrap gap-2">
+                                       <span className="bg-indigo-600 text-white px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter">{item.techCategory}</span>
+                                       <span className="bg-white text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md text-[8px] font-black shadow-sm">{item.techItem}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-800 font-bold italic leading-snug">"{item.technicalAction}"</p>
+                                    <div className="flex items-center gap-2 pt-2 border-t border-indigo-100/50 mt-2">
+                                      <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center text-[8px] font-black text-indigo-700 uppercase shadow-sm border border-indigo-100">
+                                        {item.technicianName?.charAt(0) || 'T'}
+                                      </div>
+                                      <p className="text-[9px] text-indigo-700 font-black uppercase tracking-tighter">{item.technicianName}</p>
+                                    </div>
+                                 </div>
+                               ) : (
+                                 <div className="py-8 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/80 text-slate-400 font-black uppercase text-[10px] tracking-widest">
+                                   Menunggu Juruteknik
+                                 </div>
+                               )}
+                               
+                               {item.verifiedBy && (
+                                 <div className="mt-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-4 shadow-sm">
+                                   <div className="bg-emerald-600 p-2 rounded-xl text-white shadow-md shadow-emerald-100"><ShieldCheck size={18} /></div>
+                                   <div className="text-left overflow-hidden">
+                                      <p className="text-[9px] text-emerald-700 font-black uppercase leading-none mb-1 tracking-widest">Disahkan Oleh</p>
+                                      <p className="text-xs font-black text-slate-800 leading-tight truncate">{item.verifiedBy}</p>
+                                      <p className="text-[8px] text-slate-500 font-bold mt-1 uppercase tracking-tighter flex items-center gap-1">
+                                        {formatDate(item.dateVerified)}
+                                      </p>
+                                   </div>
+                                 </div>
+                               )}
+                            </div>
+
+                            {/* BARISAN BUTANG TINDAKAN (TERMASUK EDIT & PADAM) */}
+                            <div className="space-y-3 mt-auto">
+                              <div className="flex gap-2">
+                                {role === 'juruteknik' && item.status !== 'Selesai' && item.status !== 'Ditolak' && isInstAuthenticated && (
+                                  <button 
+                                    onClick={() => { 
+                                      setActiveTechModal(item.id); 
+                                      setActionData({ text: item.technicalAction || '', techName: item.technicianName || '', techCategory: item.techCategory || '', techItem: item.techItem || '' }); 
+                                      setProofImages(item.proofImages || []);
+                                    }} 
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all border border-indigo-700"
+                                  >
+                                    Update Log
+                                  </button>
+                                )}
+                                
+                                {role === 'pengajar' && item.status === 'Penyelenggaraan' && isInstAuthenticated && (
+                                  <button onClick={() => setActiveVerifyModal(item.id)} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-2 border border-emerald-700">
+                                    <CheckCircle size={14}/> Sahkan & Arkib
+                                  </button>
+                                )}
+
+                                {role === 'pengajar' && (item.status === 'Baru' || item.status === 'Penyelenggaraan') && isInstAuthenticated && (
+                                    <button onClick={() => setItemToReject(item.id)} className="bg-white text-red-600 hover:bg-red-50 p-3.5 rounded-xl transition-all active:scale-95 border border-slate-200 shadow-sm" title="Tolak Aduan">
+                                        <X size={16} />
+                                    </button>
+                                )}
+                              </div>
+
+                              {/* BUTANG EDIT & PADAM UNTUK STAF */}
+                              {isInstAuthenticated && (
+                                 <div className="flex gap-2 border-t border-slate-100 pt-3 mt-1">
+                                    <button onClick={() => handleEditClick(item)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider" title="Edit Borang">
+                                       <Edit size={14}/> Edit
+                                    </button>
+                                    <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider" title="Padam Rekod">
+                                       <Trash2 size={14}/> Padam
+                                    </button>
+                                 </div>
+                              )}
+                              
+                              {item.status === 'Selesai' && (
+                                <button onClick={() => setActivePreviewItem(item)} className="w-full bg-slate-900 text-white hover:bg-black py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-800 shadow-md mt-2">
+                                  <Eye size={14}/> Papar Borang Digital
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </main>
