@@ -45,7 +45,8 @@ import {
   ArrowLeft,
   ImagePlus,
   Trash2,
-  Edit
+  Edit,
+  FileText
 } from 'lucide-react';
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxa6aBPzFBWf0TL9NfWlNQIi8PGFoh3aXWs6iMxG888qpzW5HTrPltTzzSysJ-IJDXs-w/exec"; 
@@ -978,35 +979,71 @@ export default function ServeDesk({ onBackHome }) {
             )}
 
             {role === 'pemohon' && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-[2.5rem] border border-slate-200/80 p-8 md:p-10 mb-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none -mr-20 -mt-20"></div>
-                <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-widest mb-4">
-                     <Monitor size={14} /> Sokongan Teknikal
+              <div className="animate-in fade-in duration-500">
+                <div className="bg-white/90 backdrop-blur-sm rounded-[2.5rem] border border-slate-200/80 p-8 md:p-10 mb-12 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none -mr-20 -mt-20"></div>
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-widest mb-4">
+                       <Monitor size={14} /> Sokongan Teknikal
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase mb-3">
+                      Aduan Kerosakan ICT
+                    </h2>
+                    <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-lg mb-6">
+                      Platform rasmi untuk melaporkan kerosakan perkakasan, perisian, atau masalah rangkaian di makmal dan bengkel. Kami sentiasa bersedia membantu anda.
+                    </p>
+                    <button onClick={() => {setEditingId(null); setShowForm(true);}} className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-3 shadow-lg shadow-indigo-100 transition-all active:scale-95 border border-indigo-700">
+                       <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" /> Lapor Kerosakan Baru
+                    </button>
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase mb-3">
-                    Aduan Kerosakan ICT
-                  </h2>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-lg mb-6">
-                    Platform rasmi untuk melaporkan kerosakan perkakasan, perisian, atau masalah rangkaian di makmal dan bengkel. Kami sentiasa bersedia membantu anda.
-                  </p>
-                  <button onClick={() => {setEditingId(null); setShowForm(true);}} className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-3 shadow-lg shadow-indigo-100 transition-all active:scale-95 border border-indigo-700">
-                     <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" /> Lapor Kerosakan Baru
-                  </button>
+                  <div className="hidden md:flex relative z-10 w-full max-w-xs justify-end">
+                     <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl shadow-inner text-center w-full relative">
+                        <div className="bg-white w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4 text-indigo-600">
+                           <Monitor size={32} />
+                        </div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Sistem</p>
+                        <p className="text-sm font-black text-emerald-600 flex items-center justify-center gap-2">
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                          </span> Sedia Menerima
+                        </p>
+                     </div>
+                  </div>
                 </div>
-                <div className="hidden md:flex relative z-10 w-full max-w-xs justify-end">
-                   <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl shadow-inner text-center w-full relative">
-                      <div className="bg-white w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4 text-indigo-600">
-                         <Monitor size={32} />
+
+                {/* Seksyen Langkah-langkah Baharu Untuk Pemohon */}
+                <div className="px-2 sm:px-8 mb-4">
+                  <div className="text-center mb-8">
+                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Aliran Proses Penyelenggaraan</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                    <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-slate-200/60 -z-10 -translate-y-1/2 rounded-full"></div>
+                    
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-1 transition-transform duration-300">
+                      <div className="w-12 h-12 mx-auto bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 border border-indigo-100 group-hover:scale-110 transition-transform">
+                        <FileText size={20} />
                       </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Sistem</p>
-                      <p className="text-sm font-black text-emerald-600 flex items-center justify-center gap-2">
-                        <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                        </span> Sedia Menerima
-                      </p>
-                   </div>
+                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">1. Lapor Kerosakan</h4>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Isi borang aduan digital dengan menyatakan butiran kerosakan secara terperinci.</p>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-1 transition-transform duration-300">
+                      <div className="w-12 h-12 mx-auto bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4 border border-amber-100 group-hover:scale-110 transition-transform">
+                        <Wrench size={20} />
+                      </div>
+                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">2. Penyelenggaraan</h4>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Juruteknik ICT akan membuat semakan, membaiki, dan merekod log tindakan.</p>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-1 transition-transform duration-300">
+                      <div className="w-12 h-12 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 group-hover:scale-110 transition-transform">
+                        <ShieldCheck size={20} />
+                      </div>
+                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">3. Pengesahan</h4>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Pengajar akan menyemak hasil pembaikan dan mengesahkan borang secara digital.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
