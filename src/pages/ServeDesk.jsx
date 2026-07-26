@@ -74,11 +74,23 @@ const INSTRUCTORS = [
 ];
 
 const LABS = [
-  "Lab Aplikasi",
-  "Lab Troubleshooting",
-  "Lab Maintenance",
-  "Bengkel Komputer",
-  "Bilik Server"
+  "Lab Aplikasi-TKR",
+  "Lab Troubleshooting-TKR",
+  "Lab Maintenance-TKR",
+  "Lab Server-TKR",
+  "BPPA" ,
+  "BPSM" ,
+  "BPPL" ,
+  "Unit Kewangan" ,
+  "Unit Perkhidmatan" ,
+  "Unit Pentadbiran" ,
+  "CESS" ,
+  "TELCOM" ,
+  "TE" ,
+  "TPPU " ,
+  "TKIM" ,
+  "TFLSOG" ,
+  "TAUTO"
 ];
 
 const CATEGORIES = [
@@ -1014,31 +1026,35 @@ export default function ServeDesk({ onBackHome }) {
 
                 {/* Seksyen Langkah-langkah Baharu Untuk Pemohon */}
                 <div className="px-2 sm:px-8 mb-4">
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Aliran Proses Penyelenggaraan</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                    <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-slate-200/60 -z-10 -translate-y-1/2 rounded-full"></div>
+                    {/* Garisan penyambung beranimasi */}
+                    <div className="hidden md:block absolute top-1/2 left-8 right-8 h-1 bg-gradient-to-r from-indigo-100 via-amber-100 to-emerald-100 -z-10 -translate-y-1/2 rounded-full animate-pulse"></div>
                     
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-1 transition-transform duration-300">
-                      <div className="w-12 h-12 mx-auto bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 border border-indigo-100 group-hover:scale-110 transition-transform">
-                        <FileText size={20} />
+                    {/* Langkah 1 */}
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-2 hover:shadow-lg hover:border-indigo-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 duration-500">
+                      <div className="w-14 h-14 mx-auto bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-5 border border-indigo-100 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
+                        <FileText size={24} />
                       </div>
                       <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">1. Lapor Kerosakan</h4>
                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Isi borang aduan digital dengan menyatakan butiran kerosakan secara terperinci.</p>
                     </div>
 
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-1 transition-transform duration-300">
-                      <div className="w-12 h-12 mx-auto bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4 border border-amber-100 group-hover:scale-110 transition-transform">
-                        <Wrench size={20} />
+                    {/* Langkah 2 */}
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-2 hover:shadow-lg hover:border-amber-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                      <div className="w-14 h-14 mx-auto bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5 border border-amber-100 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 shadow-inner">
+                        <Wrench size={24} />
                       </div>
                       <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">2. Penyelenggaraan</h4>
                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Juruteknik ICT akan membuat semakan, membaiki, dan merekod log tindakan.</p>
                     </div>
 
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-1 transition-transform duration-300">
-                      <div className="w-12 h-12 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 group-hover:scale-110 transition-transform">
-                        <ShieldCheck size={20} />
+                    {/* Langkah 3 */}
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/60 shadow-sm text-center group hover:-translate-y-2 hover:shadow-lg hover:border-emerald-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                      <div className="w-14 h-14 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-5 border border-emerald-100 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
+                        <ShieldCheck size={24} />
                       </div>
                       <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight mb-2">3. Pengesahan</h4>
                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Pengajar akan menyemak hasil pembaikan dan mengesahkan borang secara digital.</p>
