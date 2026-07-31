@@ -76,23 +76,11 @@ const INSTRUCTORS = [
 ];
 
 const LABS = [
-  "Lab Aplikasi-TKR",
-  "Lab Troubleshooting-TKR",
-  "Lab Maintenance-TKR",
-  "Lab Server-TKR",
-  "BPPA" ,
-  "BPSM" ,
-  "BPPL" ,
-  "Unit Kewangan" ,
-  "Unit Perkhidmatan" ,
-  "Unit Pentadbiran" ,
-  "CESS" ,
-  "TELCOM" ,
-  "TE" ,
-  "TPPU " ,
-  "TKIM" ,
-  "TFLSOG" ,
-  "TAUTO"
+  "Lab Aplikasi",
+  "Lab Troubleshooting",
+  "Lab Maintenance",
+  "Bengkel Komputer",
+  "Bilik Server"
 ];
 
 const CATEGORIES = [
@@ -376,7 +364,6 @@ export default function ServeDesk({ onBackHome }) {
     total: complaints.length
   };
 
-  // LOGIK SMART FILTERING UNTUK DASHBOARD MAKMAL BERMASALAH
   const activeLabStats = LABS.map(lab => {
     return {
       lab,
@@ -408,6 +395,34 @@ export default function ServeDesk({ onBackHome }) {
     return `ADTEC/SDK/ICT/${year}/${String(count).padStart(3, '0')}`;
   };
 
+  // 🚀 FUNGSI HANTAR NOTIFIKASI TELEGRAM
+  const sendTelegramAlert = async (data, formNo) => {
+    const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) return;
+
+    const textMessage = `🚨 *ADUAN KEROSAKAN ICT BARU* 🚨\n\n*No. Rujukan:* ${formNo}\n*Pengadu:* ${data.applicantName} (${data.unit})\n*Lokasi:* ${data.lab}\n*PC / Aset:* PC-${data.pcNo} ${data.assetNo ? `(${data.assetNo})` : ''}\n*Kategori:* ${data.category}\n\n*Isu:* _"${data.issue}"_\n\nSila log masuk ke *ServeDesk+* untuk tindakan lanjut.`;
+
+    const apiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+    try {
+        await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: textMessage,
+                parse_mode: 'Markdown'
+            })
+        });
+    } catch (error) {
+        console.error("Ralat Notifikasi Telegram:", error);
+    }
+  };
+
   const handleSubmitComplaint = async (e) => {
     e.preventDefault();
     if (!formData.lab || !formData.category) return;
@@ -422,6 +437,7 @@ export default function ServeDesk({ onBackHome }) {
       } else {
         const complaintsCol = collection(db, 'artifacts', appId, 'public', 'data', 'complaints');
         const newFormNo = generateFormNumber();
+        
         await addDoc(complaintsCol, {
           ...formData, 
           formNo: newFormNo,
@@ -436,6 +452,9 @@ export default function ServeDesk({ onBackHome }) {
           dateCreated: serverTimestamp(), 
           dateUpdated: serverTimestamp()
         });
+
+        // HANTAR NOTIFIKASI TELEGRAM DI SINI
+        sendTelegramAlert(formData, newFormNo);
       }
 
       setShowSuccessAnim(true);
